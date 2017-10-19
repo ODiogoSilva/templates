@@ -120,7 +120,7 @@ def main():
 
     with open("spades_status", "w") as fh:
         if p.returncode != 0:
-            fh.write(str(stderr))
+            fh.write(str(stdout))
             return
         else:
             fh.write("pass")
