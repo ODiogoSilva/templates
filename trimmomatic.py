@@ -58,8 +58,7 @@ def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
     # Create base CLI
     cli = [
         "java",
-        "-Xmx",
-        "$task.memory"[:-1],
+        "-Xmx{}".format("$task.memory"[:-1].lower()),
         "-jar",
         TRIM_PATH.strip(),
         "PE",
