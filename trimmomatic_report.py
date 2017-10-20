@@ -105,7 +105,7 @@ def main(log_files):
 
     for log in log_files:
 
-        log_id = log.split("_")[0]
+        log_id = log.rstrip("_trimlog.txt")
 
         # Populate storage of current sample
         log_storage[log_id] = parse_log(log)
