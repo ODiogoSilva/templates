@@ -37,12 +37,13 @@ from subprocess import PIPE
 from collections import OrderedDict
 
 
-FASTQ_ID = '$fastq_id'
-ASSEMBLY_FILE = '$assembly'
-COVERAGE_FILE = '$coverage'
-BAM_FILE = '$bam_file'
-MIN_ASSEMBLY_COVERAGE = '$min_assembly_coverage'
-GSIZE = float('$gsize')
+if __file__.endswith(".command.sh"):
+    FASTQ_ID = '$fastq_id'
+    ASSEMBLY_FILE = '$assembly'
+    COVERAGE_FILE = '$coverage'
+    BAM_FILE = '$bam_file'
+    MIN_ASSEMBLY_COVERAGE = '$min_assembly_coverage'
+    GSIZE = float('$gsize')
 
 
 def parse_coverage_table(coverage_file):
@@ -193,13 +194,14 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size):
         return True
 
 
-def main():
+def main(fastq_id, assembly_file, coverage_file, bam_file,
+         min_assembly_coverage, gsize):
 
     # Get coverage info, total size and total coverage from the assembly
-    coverage_info, a_size, a_cov = parse_coverage_table(COVERAGE_FILE)
+    coverage_info, a_size, a_cov = parse_coverage_table(coverage_file)
 
     # Assess the minimum assembly coverage
-    if MIN_ASSEMBLY_COVERAGE == "auto":
+    if min_assembly_coverage == "auto":
         # Get the 1/3 value of the current assembly coverage
         min_coverage = (a_cov / a_size) * .3
         # If the 1/3 coverage is lower than 10, change it to the minimum of
@@ -207,26 +209,28 @@ def main():
         if min_coverage < 10:
             min_coverage = 10
     else:
-        min_coverage = int(MIN_ASSEMBLY_COVERAGE)
+        min_coverage = int(min_assembly_coverage)
 
     # Check if filtering the assembly using the provided min_coverage will
     # reduce the final bp number to less than 80% of the estimated genome
     # size.
     # If the check below passes with True, then the filtered assembly
     # is above the 80% genome size threshold.
-    filtered_assembly = "{}_filtered.assembly.fasta".format(FASTQ_ID)
+    filtered_assembly = "{}_filtered.assembly.fasta".format(fastq_id)
     filtered_bam = "filtered.bam"
-    if check_filtered_assembly(coverage_info, min_coverage, GSIZE):
+    if check_filtered_assembly(coverage_info, min_coverage, gsize):
         # Filter assembly contigs based on the minimum coverage.
-        filter_assembly(ASSEMBLY_FILE, min_coverage, coverage_info,
+        filter_assembly(assembly_file, min_coverage, coverage_info,
                         filtered_assembly)
-        filter_bam(coverage_info, BAM_FILE, min_coverage, filtered_bam)
+        filter_bam(coverage_info, bam_file, min_coverage, filtered_bam)
     # Could not filter the assembly as it would drop below acceptable length
     # levels. Copy the original assembly to the output assembly file
     # for compliance with the output channel
     else:
-        shutil.copy(ASSEMBLY_FILE, filtered_assembly)
-        shutil.copy(BAM_FILE, filtered_bam)
+        shutil.copy(assembly_file, filtered_assembly)
+        shutil.copy(bam_file, filtered_bam)
 
 
-main()
+if __name__ == '__main__':
+    main(FASTQ_ID, ASSEMBLY_FILE, COVERAGE_FILE, BAM_FILE,
+         MIN_ASSEMBLY_COVERAGE, GSIZE)
