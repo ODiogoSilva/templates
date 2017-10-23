@@ -21,8 +21,9 @@ assembly: Path to assembly file in Fasta format
 from collections import OrderedDict
 
 
-FASTQ_ID = '$fastq_id'
-ASSEMBLY_FILE = '$assembly'
+if __file__.endswith(".command.sh"):
+    FASTQ_ID = '$fastq_id'
+    ASSEMBLY_FILE = '$assembly'
 
 
 class Assembly:
@@ -158,11 +159,12 @@ class Assembly:
             fh.write(summary_line)
 
 
-def main():
+def main(fastq_id, assembly_file):
 
-    assembly_obj = Assembly(ASSEMBLY_FILE, FASTQ_ID)
+    assembly_obj = Assembly(assembly_file, fastq_id)
 
-    assembly_obj.get_summary_stats("{}_assembly_report.csv".format(FASTQ_ID))
+    assembly_obj.get_summary_stats("{}_assembly_report.csv".format(fastq_id))
 
 
-main()
+if __name__ == '__main__':
+    main(FASTQ_ID, ASSEMBLY_FILE)
