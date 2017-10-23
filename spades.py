@@ -39,12 +39,12 @@ import subprocess
 
 from subprocess import PIPE
 
-
-FASTQ_ID = '$fastq_id'
-FASTQ_PAIR = '$fastq_pair'.split()
-MAX_LEN = int('$max_len'.strip())
-KMERS = '$kmers'.strip()
-OPTS = [x.strip() for x in '$opts'.strip("[]").split(",")]
+if __file__.endswith(".command.sh"):
+    FASTQ_ID = '$fastq_id'
+    FASTQ_PAIR = '$fastq_pair'.split()
+    MAX_LEN = int('$max_len'.strip())
+    KMERS = '$kmers'.strip()
+    OPTS = [x.strip() for x in '$opts'.strip("[]").split(",")]
 
 
 def set_kmers(kmer_opt, max_read_len):
@@ -85,11 +85,11 @@ def set_kmers(kmer_opt, max_read_len):
     return kmers
 
 
-def main():
+def main(fastq_id, fastq_pair, max_len, kmer, opts):
 
-    min_coverage, min_kmer_coverage = OPTS
+    min_coverage, min_kmer_coverage = opts
 
-    kmers = set_kmers(KMERS, MAX_LEN)
+    kmers = set_kmers(kmer, max_len)
 
     cli = [
         "spades.py",
@@ -110,9 +110,9 @@ def main():
     # Add FastQ files
     cli += [
         "-1",
-        FASTQ_PAIR[0],
+        fastq_pair[0],
         "-2",
-        FASTQ_PAIR[1]
+        fastq_pair[1]
     ]
 
     p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
@@ -126,7 +126,7 @@ def main():
             fh.write("pass")
 
     # Change the default contigs.fasta assembly name to a more informative one
-    os.rename("contigs.fasta", "{}_spades.assembly.fasta".format(FASTQ_ID))
+    os.rename("contigs.fasta", "{}_spades.assembly.fasta".format(fastq_id))
 
 
-main()
+main(FASTQ_ID, FASTQ_PAIR, MAX_LEN, KMERS, OPTS)
