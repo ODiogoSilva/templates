@@ -30,10 +30,11 @@ ${fastq_id}.report.fasta : CSV file with the results of the filters for each
 import operator
 
 
-FASTQ_ID = '$fastq_id'
-ASSEMBLY_FILE = '$assembly'
-GSIZE = float('$gsize')
-OPTS = [x.strip() for x in '$opts'.strip("[]").split(",")]
+if __file__.endswith(".command.sh"):
+    FASTQ_ID = '$fastq_id'
+    ASSEMBLY_FILE = '$assembly'
+    GSIZE = float('$gsize')
+    OPTS = [x.strip() for x in '$opts'.strip("[]").split(",")]
 
 
 class Assembly:
@@ -357,28 +358,28 @@ class Assembly:
                 fh.write("{}, {}\\n".format(contig_id, vals))
 
 
-def main():
+def main(fastq_id, assembly_file, gsize, opts):
 
-    min_contig_len, min_kmer_cov = [int(x) for x in OPTS]
+    min_contig_len, min_kmer_cov = [int(x) for x in opts]
 
     # Parse the spades assembly file and perform the first filtering.
-    spades_assembly = Assembly(ASSEMBLY_FILE, min_contig_len, min_kmer_cov,
-                               FASTQ_ID)
+    spades_assembly = Assembly(assembly_file, min_contig_len, min_kmer_cov,
+                               fastq_id)
 
     # Check if assembly size of the first assembly is lower than 80% of the
     # estimated genome size. If True, perform the filtering without the
     # k-mer coverage filter
-    if spades_assembly.get_assembly_length() < GSIZE * 1000000 * 0.8:
+    if spades_assembly.get_assembly_length() < gsize * 1000000 * 0.8:
         spades_assembly.filter_contigs(*[
             ["length", ">=", min_contig_len]
         ])
 
     # Write filtered assembly
-    output_assembly = "{}.assembly.fasta".format(FASTQ_ID)
+    output_assembly = "{}.assembly.fasta".format(fastq_id)
     spades_assembly.write_assembly(output_assembly)
     # Write report
-    output_report = "{}.report.csv".format(FASTQ_ID)
+    output_report = "{}.report.csv".format(fastq_id)
     spades_assembly.write_report(output_report)
 
 
-main()
+main(FASTQ_ID, ASSEMBLY_FILE, GSIZE, OPTS)
