@@ -382,4 +382,5 @@ def main(fastq_id, assembly_file, gsize, opts):
     spades_assembly.write_report(output_report)
 
 
-main(FASTQ_ID, ASSEMBLY_FILE, GSIZE, OPTS)
+if __name__ == '__main__':
+    main(FASTQ_ID, ASSEMBLY_FILE, GSIZE, OPTS)
