@@ -128,5 +128,5 @@ def main(fastq_id, fastq_pair, max_len, kmer, opts):
     # Change the default contigs.fasta assembly name to a more informative one
     os.rename("contigs.fasta", "{}_spades.assembly.fasta".format(fastq_id))
 
-
-main(FASTQ_ID, FASTQ_PAIR, MAX_LEN, KMERS, OPTS)
+if __name__ == '__main__':
+    main(FASTQ_ID, FASTQ_PAIR, MAX_LEN, KMERS, OPTS)
