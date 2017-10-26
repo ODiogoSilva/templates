@@ -106,12 +106,18 @@ class Abricate:
                 except ValueError:
                     identity = None
 
+                try:
+                    accession = fields[11]
+                except IndexError:
+                    print(line)
+                    accession = None
+
                 self.storage[self._key] = {
                     "infile": fields[0],
                     "reference": fields[1],
                     "seq_range": (int(fields[2]), int(fields[3])),
                     "gene": fields[4],
-                    "accession": fields[11],
+                    "accession": accession,
                     "database": fields[10],
                     "coverage": coverage,
                     "identity": identity
