@@ -162,25 +162,24 @@ class Abricate:
 
             my_filter = ["coverage", ">=", 80]
 
-        Filters should always be provide as a list of lists and using the '*'
-        notation when calling the function:
+        Filters should always be provide as a list of lists:
 
-            iter_filter(*[["coverage", ">=", 80]])
+            iter_filter([["coverage", ">=", 80]])
             # or
             my_filters = [["coverage", ">=", 80],
                           ["identity", ">=", 50]]
-            iter_filter(*my_filters)
+            iter_filter(my_filters)
 
         As a convenience, a list of the desired databases can be directly
         specified using the `database` argument, which will only report
         entries for the specified databases:
 
-            iter_filter(*my_filters, databases=["plasmidfinder"])
+            iter_filter(my_filters, databases=["plasmidfinder"])
 
         By default, this method will yield the complete entry record. However,
         the returned filters can be specified using the `fields` option.
 
-            iter_filter(*my_filters, fields=["reference", "coverage"])
+            iter_filter(my_filters, fields=["reference", "coverage"])
 
         Parameters
         ----------
