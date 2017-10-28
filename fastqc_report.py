@@ -296,7 +296,7 @@ def check_summary_health(summary_file):
 def main(fastq_id, result_p1, result_p2):
 
     with open("fastqc_health", "w") as health_fh, \
-            open("report", "w") as rep_fh, \
+            open("{}_report".format(fastq_id), "w") as rep_fh, \
             open("optimal_trim", "w") as trim_fh:
 
         # Perform health check according to the FastQC summary report for
