@@ -109,7 +109,6 @@ class Abricate:
                 try:
                     accession = fields[11]
                 except IndexError:
-                    print(line)
                     accession = None
 
                 self.storage[self._key] = {
@@ -158,7 +157,8 @@ class Abricate:
 
         return ops[op](x, y)
 
-    def iter_filter(self, filters, databases=None, fields=None):
+    def iter_filter(self, filters, databases=None, fields=None,
+                    filter_behavior="and"):
         """General purpose filter iterator
 
         This general filter iterator allows the filtering of entries based
@@ -198,6 +198,12 @@ class Abricate:
             List of databases that should be reported.
         fields : list
             List of fields from each individual entry that are yielded.
+        filter_behavior : str
+            options: 'and' 'or'
+            Sets the behaviour of the filters, if multiple filters have been
+            provided. By default it is set to 'and', which means that an
+            entry has to pass all filters. It can be set to 'or', in which
+            case one one of the filters has to pass.
 
         yields
         ------
@@ -206,10 +212,18 @@ class Abricate:
 
         """
 
+        if filter_behavior not in ["and", "or"]:
+            raise ValueError("Filter behavior must be either 'and' or 'or'")
+
         for key, dic in self.storage.items():
 
-            # Turns False when a filter test fails
-            flag = True
+            # This attribute will determine whether an entry will be yielded
+            # or not
+            _pass = False
+
+            # Stores the flags with the test results for each filter
+            # The results will be either True or False
+            flag = []
 
             # Filter for databases
             if databases:
@@ -222,9 +236,21 @@ class Abricate:
                 # Get value of current filter
                 val = dic[f[0]]
                 if not self._test_truth(val, f[1], f[2]):
-                    flag = False
+                    flag.append(False)
+                else:
+                    flag.append(True)
 
-            if flag:
+            # Test whether the entry will pass based on the test results
+            # and the filter behaviour
+            if filter_behavior == "and":
+                if all(flag):
+                    _pass = True
+                    print(flag)
+            elif filter_behavior == "or":
+                if any(flag):
+                    _pass = True
+
+            if _pass:
                 if fields:
                     yield dict((x, y) for x, y in dic.items() if x in fields)
                 else:
@@ -256,3 +282,14 @@ if __name__ == '__main__':
         abr = Abricate([abr_file])
 
     main(FASTQ_ID, ABRICATE_FILE)
+
+    # abr = Abricate(["/home/diogosilva/Diogo/Science/IMM/Github_issues/abricate_parser/master_fasta_abr.card.txt"])
+    #
+    # filters = [
+    #     ["coverage", ">=", 80],
+    #     ["identity", ">=", 70]
+    # ]
+    #
+    # for i in abr.iter_filter(filters, fields=["coverage", "identity"],
+    #                          filter_behavior="ord"):
+    #     print(i)
