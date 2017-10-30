@@ -245,7 +245,6 @@ class Abricate:
             if filter_behavior == "and":
                 if all(flag):
                     _pass = True
-                    print(flag)
             elif filter_behavior == "or":
                 if any(flag):
                     _pass = True
