@@ -84,6 +84,7 @@ COPEN = {
     "zip": zipfile.ZipFile
 }
 
+# To support NextFlow execution, the "\" characters have to be escaped
 MAGIC_DICT = {
     b"\\x1f\\x8b\\x08": "gz",
     b"\\x42\\x5a\\x68": "bz2",
@@ -92,15 +93,28 @@ MAGIC_DICT = {
 
 
 def guess_file_compression(file_path, magic_dict=None):
-    """
+    """Guess the compression of an input file.
+
+    This function guesses the compression of a given file by checking for
+    a binary signature at the beginning of the file. This signatures are
+    stored in the `MAGIC_DICT` dictionary. The supported compression formats
+    are gzip, bzip2 and zip. If none of the signatures in this dictionary
+    are found at the beginning of the file, it returns None
 
     Parameters
     ----------
-    file_path
-    magic_dict
+    file_path : str
+        Path to input file.
+    magic_dict : dict
+        Dictionary containing the signatures of the compression types. The
+        key should be the binary signature and the value should be the
+        compression format
 
     Returns
     -------
+    file_type : str or None
+        If a compression type is detected, returns a string with the format.
+        If not, returns None.
 
     """
 
