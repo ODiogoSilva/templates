@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 """
-fastqc template for nextflow
-
 Purpose
 -------
 
@@ -10,15 +8,28 @@ This module is intended to run FastQC on paired-end FastQ files.
 
 Expected input
 --------------
-fastq_pair: Pair of FastQ file paths
-    .: 'SampleA_1.fastq.gz SampleA_2.fastq.gz'
+
+The following variables are expected whether using NextFlow or the
+:py:func:`main` executor.
+
+- ``fastq_pair`` : *Pair of FastQ file paths*
+    - e.g.: ``'SampleA_1.fastq.gz SampleA_2.fastq.gz'``
 
 Generated output
 ----------------
-pair_[1,2]_data: File containing FastQC report at the nucleotide level
-    .: 'pair_1_data' and 'pair_2_data'
-pair_[1,2]_summary: File containing FastQC report for each category
-    .: 'pair_1_summary' and 'pair_2_summary'
+
+The generated output are output files that contain an object, usually a string.
+
+- ``pair_[1,2]_data`` : File containing FastQC report at the nucleotide level\
+    for each pair
+    - e.g.: ``'pair_1_data'`` and ``'pair_2_data'``
+- ``pair_[1,2]_summary``: File containing FastQC report for each category and\
+    for each pair
+    - e.g.: ``'pair_1_summary'`` and ``'pair_2_summary'``
+
+Code documentation
+------------------
+
 """
 
 import os
@@ -35,18 +46,26 @@ if __file__.endswith(".command.sh"):
 
 
 def convert_adatpers(adapter_fasta):
-    """Generates an adapter file for FastQC from a fasta file
+    """Generates an adapter file for FastQC from a fasta file.
+
+    The provided adapters file is assumed to be a simple fasta file with the
+    adapter's name as header and the corresponding sequence::
+
+        >TruSeq_Universal_Adapter
+        AATGATACGGCGACCACCGAGATCTACACTCTTTCCCTACACGACGCTCTTCCGATCT
+        >TruSeq_Adapter_Index 1
+        GATCGGAAGAGCACACGTCTGAACTCCAGTCACATCACGATCTCGTATGCCGTCTTCTGCTTG
 
     Parameters
     ----------
     adapter_fasta : str
-        Path to Fasta file with adapter sequences
+        Path to Fasta file with adapter sequences.
 
     Returns
     -------
     adapter_out : str or None
-        The path to the reformatted adapter file. Returns None if the adapters
-        file does not exist or the path is incorrect.
+        The path to the reformatted adapter file. Returns ``None`` if the
+        adapters file does not exist or the path is incorrect.
     """
 
     adapter_out = "fastqc_adapters.tab"
@@ -73,6 +92,18 @@ def convert_adatpers(adapter_fasta):
 
 
 def main(fastq_pair, adapter_file, cpus):
+    """ Main executor of the fastq template.
+
+    Parameters
+    ----------
+    fastq_pair : list
+        Two element list containing the paired FastQ files.
+    adapter_file : str
+        Path to adapters file.
+    cpus : int or str
+        Number of cpu's that will be by FastQC.
+
+    """
 
     # If an adapter file was provided, convert it to FastQC format
     if adapter_file:
