@@ -29,11 +29,17 @@ if __file__.endswith(".command.sh"):
 class Assembly:
 
     def __init__(self, assembly_file, sample_id):
-        """
+        """Class that parses and filters a SPAdes fasta assembly file
+
+        This class parses a SPAdes assembly fasta file, collects a number
+        of summary statistics and metadata from the contigs and reports.
 
         Parameters
         ----------
-        assembly_file
+        assembly_file : str
+            Path to SPAdes output assembly file.
+        sample_id : str
+            Name of the sample for the current assembly.
         """
 
         self.summary_info = OrderedDict([
@@ -55,19 +61,28 @@ class Assembly:
         """
 
         self.contigs = OrderedDict()
+        """
+        OrderedDict object that maps the contig headers to the corresponding
+        sequence
+        """
+
         self.sample = sample_id
+        """
+        String with the sample id
+        """
 
         self._parse_assembly(assembly_file)
 
     def _parse_assembly(self, assembly_file):
-        """
+        """Parse a SPAdes assembly fasta file
+
+        This is a Fasta parsing method that populates the self.contigs
+        attribute with data for each contig in the assembly.
 
         Parameters
         ----------
-        assembly_file
-
-        Returns
-        -------
+        assembly_file : str
+            Path to the assembly fasta file.
 
         """
 
