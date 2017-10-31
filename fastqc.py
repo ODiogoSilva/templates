@@ -20,10 +20,10 @@ Generated output
 
 The generated output are output files that contain an object, usually a string.
 
-- ``pair_[1,2]_data`` : File containing FastQC report at the nucleotide level\
+- ``pair_{1,2}_data`` : File containing FastQC report at the nucleotide level\
     for each pair
     - e.g.: ``'pair_1_data'`` and ``'pair_2_data'``
-- ``pair_[1,2]_summary``: File containing FastQC report for each category and\
+- ``pair_{1,2}_summary``: File containing FastQC report for each category and\
     for each pair
     - e.g.: ``'pair_1_summary'`` and ``'pair_2_summary'``
 
