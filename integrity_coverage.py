@@ -4,16 +4,16 @@
 integrity_coverage template for nextflow
 
 Purpose
--------
+=======
 
 This module has three purposes while iterating over pairs of FastQ files:
     - Check integrity of FastQ (corrupted files)
-    - Guess the encoding of FastQ files (this can be turned off in the 'opts'
+    - Guess the encoding of FastQ files (this can be turned off in the 'opts' \
     argument, see below.)
     - Estimate coverage for each sample
 
 Expected input
---------------
+==============
 
 fastq_id: Sample Identification string
     .: 'SampleA'
@@ -29,7 +29,7 @@ opts: Specify additional arguments for executing integrity_coverage. The
         '-e' : Skip encoding guess.
 
 Generated output
----------------
+================
 
 '${fastq_id}_encoding' : Stores the encoding for the sample FastQ. If no
     encoding could be guessed, write 'None' to file.
@@ -265,7 +265,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             if len(encoding) > 1:
                 encoding = set(encoding)
                 phred = set(phred)
-                # Get encoding and phred as strings
+                # Get encodiQng and phred as strings
                 # e.g. enc: Sanger, Illumina-1.8
                 # e.g. phred: 64
                 enc = "{}".format(",".join([x for x in encoding]))
