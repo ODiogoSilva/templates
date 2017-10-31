@@ -38,6 +38,9 @@ The generated output are output files that contain an object, usually a string.
     and 3' ends of the reads.
     - e.g.: ``'15 151'``
 
+Code documentation
+------------------
+
 """
 
 import os

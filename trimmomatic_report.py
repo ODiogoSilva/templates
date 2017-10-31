@@ -1,21 +1,29 @@
 #!/usr/bin/env python3
 
 """
-trimmomatic_report template for nextflow
-
 Purpose
 -------
 
 This module is intended parse the results of the Trimmomatic log for a set
-of samples
+of one or more samples.
 
 Expected input
 --------------
-log_files: Trimmomatic log files
-    .: 'Sample1_trimlog.txt Sample2_trimlog.txt'
+
+The following variables are expected whether using NextFlow or the
+:py:func:`main` executor.
+
+- ``log_files``: Trimmomatic log files.
+    - e.g.: ``'Sample1_trimlog.txt Sample2_trimlog.txt'``
+
 
 Generated output
 ----------------
+- ``trimmomatic_report.csv`` : Summary report of the trimmomatic logs for\
+    all samples
+
+Code documentation
+------------------
 
 """
 
@@ -28,14 +36,27 @@ if __file__.endswith(".command.sh"):
 
 
 def parse_log(log_file):
-    """
+    """Retrieves some statistics from a single Trimmomatic log file.
+
+    This function parses Trimmomatic's log file and stores some trimming
+    statistics in an :py:class:`OrderedDict` object. This object contains
+    the following keys:
+
+        - ``clean_len``: Total length after trimming.
+        - ``total_trim``: Total trimmed base pairs.
+        - ``total_trim_perc``: Total trimmed base pairs in percentage.
+        - ``5trim``: Total base pairs trimmed at 5' end.
+        - ``3trim``: Total base pairs trimmed at 3' end.
 
     Parameters
     ----------
-    log_file
+    log_file : str
+        Path to trimmomatic log file.
 
     Returns
     -------
+    x : :py:class:`OrderedDict`
+        Object storing the trimming statistics.
 
     """
 
@@ -76,16 +97,15 @@ def parse_log(log_file):
 
 
 def write_report(storage_dic, output_file):
-    """
+    """ Writes a report from multiple samples.
 
     Parameters
     ----------
-    storage_dic
-    output_file
-
-    Returns
-    -------
-
+    storage_dic : dict or :py:class:`OrderedDict`
+        Storage containing the trimming statistics. See :py:func:`parse_log`
+        for its generation.
+    output_file : str
+        Path where the output file will be generated.
     """
 
     with open(output_file, "w") as fh:
@@ -100,6 +120,13 @@ def write_report(storage_dic, output_file):
 
 
 def main(log_files):
+    """ Main executor of the trimmomatic_report template.
+
+    Parameters
+    ----------
+    log_files : list
+        List of paths to the trimmomatic log files.
+    """
 
     log_storage = OrderedDict()
 

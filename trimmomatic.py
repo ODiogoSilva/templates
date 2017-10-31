@@ -37,6 +37,9 @@ The generated output are output files that contain an object, usually a string.
     ``STDERR`` message.
     - e.g.: ``'pass'``
 
+Code documentation
+------------------
+
 """
 
 # TODO: More control over read trimming
