@@ -25,6 +25,9 @@ Generated output
     assembly.
     - e.g.: ``'SampleA_assembly_report.csv'``
 
+Code documentation
+------------------
+
 """
 
 from collections import OrderedDict
@@ -194,7 +197,7 @@ def main(fastq_id, assembly_file):
     fastq_id : str
         Sample Identification string.
     assembly_file : str
-        Path to assembly file in Fasta format
+        Path to assembly file in Fasta format.
 
     """
 

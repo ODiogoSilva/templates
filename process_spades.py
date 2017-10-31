@@ -14,7 +14,7 @@ Expected input
 The following variables are expected whether using NextFlow or the
 :py:func:`main` executor.
 
-- ``fastq_id``: Pair of FastQ file paths.
+- ``fastq_id``: Sample Identification string.
     - e.g.: ``'SampleA'``
 - ``assembly``: Fasta file with the assembly from SPAdes.
     - e.g.: ``'contigs.fasta'``
