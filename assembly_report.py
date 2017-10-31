@@ -1,20 +1,29 @@
 #!/usr/bin/env python3
 
 """
-assembly_report template for nextflow
-
 Purpose
 -------
 
 This module is intended to provide a summary report for a given assembly
-in Fasta format
+in Fasta format.
 
 Expected input
 --------------
-fastq_id: Sample Identification string
-    .: 'SampleA'
-assembly: Path to assembly file in Fasta format
-    .: 'assembly.fasta'
+
+The following variables are expected whether using NextFlow or the
+:py:func:`main` executor.
+
+- ``fastq_id`` : Sample Identification string.
+    - e.g.: ``'SampleA'``
+- ``assembly`` : Path to assembly file in Fasta format.
+    - e.g.: ``'assembly.fasta'``
+
+Generated output
+----------------
+
+- ``${fastq_id}_assembly_report.csv`` : CSV with summary information of the \
+    assembly.
+    - e.g.: ``'SampleA_assembly_report.csv'``
 
 """
 
@@ -27,20 +36,20 @@ if __file__.endswith(".command.sh"):
 
 
 class Assembly:
+    """Class that parses and filters an assembly file in Fasta format.
+
+    This class parses an assembly file, collects a number
+    of summary statistics and metadata from the contigs and reports.
+
+    Parameters
+    ----------
+    assembly_file : str
+        Path to assembly file.
+    sample_id : str
+        Name of the sample for the current assembly.
+    """
 
     def __init__(self, assembly_file, sample_id):
-        """Class that parses and filters a SPAdes fasta assembly file
-
-        This class parses a SPAdes assembly fasta file, collects a number
-        of summary statistics and metadata from the contigs and reports.
-
-        Parameters
-        ----------
-        assembly_file : str
-            Path to SPAdes output assembly file.
-        sample_id : str
-            Name of the sample for the current assembly.
-        """
 
         self.summary_info = OrderedDict([
             ("ncontigs", 0),
@@ -51,33 +60,35 @@ class Assembly:
             ("missing_data", 0)
         ])
         """
-        Initialize summary information dictionary. Contains:
-            - ncontigs: Number of contigs
-            - avg_contig_size: Average size of contigs
-            - n50: N50 metric
-            - total_len: Total assembly length
-            - avg_gc: Average GC proportion
-            - missing_data: Count of missing data characters
+        OrderedDict: Initialize summary information dictionary. Contains keys:
+        
+            - ``ncontigs``: Number of contigs
+            - ``avg_contig_size``: Average size of contigs
+            - ``n50``: N50 metric
+            - ``total_len``: Total assembly length
+            - ``avg_gc``: Average GC proportion
+            - ``missing_data``: Count of missing data characters
         """
 
         self.contigs = OrderedDict()
         """
-        OrderedDict object that maps the contig headers to the corresponding
+        OrderedDict: Object that maps the contig headers to the corresponding
         sequence
         """
 
         self.sample = sample_id
         """
-        String with the sample id
+        str: Sample id
         """
 
         self._parse_assembly(assembly_file)
 
     def _parse_assembly(self, assembly_file):
-        """Parse a SPAdes assembly fasta file
+        """Parse an assembly file in fasta format.
 
-        This is a Fasta parsing method that populates the self.contigs
-        attribute with data for each contig in the assembly.
+        This is a Fasta parsing method that populates the
+        :py:attr:`Assembly.contigs` attribute with data for each contig in the
+         assembly.
 
         Parameters
         ----------
@@ -114,6 +125,7 @@ class Assembly:
         """Generates a CSV report with summary statistics about the assembly
 
         The calculated statistics are:
+
             - Number of contigs
             - Average contig size
             - N50
@@ -175,6 +187,16 @@ class Assembly:
 
 
 def main(fastq_id, assembly_file):
+    """Main executor of the assembly_report template.
+
+    Parameters
+    ----------
+    fastq_id : str
+        Sample Identification string.
+    assembly_file : str
+        Path to assembly file in Fasta format
+
+    """
 
     assembly_obj = Assembly(assembly_file, fastq_id)
 
