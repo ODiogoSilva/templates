@@ -1,32 +1,42 @@
 #!/usr/bin/env python3
 
 """
-fastqc_report template for nextflow
-
 Purpose
 -------
 
-This module is intended parse the results of FastQC for paired end FastQ
-samples
+This module is intended parse the results of FastQC for paired end FastQ \
+samples. It parses two reports:
+
+    - Categorical report
+    - Nucleotide level report.
 
 Expected input
 --------------
-fastq_id: Sample Identification string
-    .: 'SampleA'
-result_p1: Path to FastQC result files for pair 1
-    .: 'SampleA_1_data SampleA_1_summary'
-result_p2 Path to FastQC result files for pair 2
-    .: 'SampleA_2_data SampleA_2_summary'
+
+The following variables are expected whether using NextFlow or the
+:py:func:`main` executor.
+
+- ``fastq_id`` : Sample identification string
+    - e.g.: ``'SampleA'``
+
+- ``result_p1`` : Path to both FastQC result files for pair 1
+    - e.g.: ``'SampleA_1_data SampleA_1_summary'``
+
+- ``result_p2`` : Path to both FastQC result files for pair 2
+    - e.g.: ``'SampleA_2_data SampleA_2_summary'``
 
 Generated output
 ----------------
-fastqc_health: Stores the health check for the current sample. If it passes
-    all checks, it contains only the string 'pass'. Otherwise, contains
+
+The generated output are output files that contain an object, usually a string.
+
+- ``fastqc_health`` : Stores the health check for the current sample. If it
+    passes all checks, it contains only the string 'pass'. Otherwise, contains
     the summary categories and their respective results
-    .: 'pass'
-optimal_trim: Stores a tuple with the optimal trimming positions for 5' and
-    3' ends of the reads.
-    .: '15 151'
+    - e.g.: ``'pass'``
+- ``optimal_trim`` : Stores a tuple with the optimal trimming positions for 5'
+    and 3' ends of the reads.
+    - e.g.: ``'15 151'``
 
 """
 
@@ -42,32 +52,32 @@ if __file__.endswith(".command.sh"):
 
 
 def get_trim_index(biased_list):
-    """Returns the trim index from a boolean list
+    """Returns the trim index from a ``bool`` list
 
-    Provided with a list of boolean elements ([False, False, True, True]),
+    Provided with a list of ``bool`` elements (``[False, False, True, True]``),
     this function will assess the index of the list that minimizes the number
     of True elements (biased positions) at the extremities. To do so,
     it will iterate over the boolean list and find an index position where
-    there are two consecutive False elements after a True element. This
+    there are two consecutive ``False`` elements after a ``True`` element. This
     will be considered as an optimal trim position. For example, in the
-    following list:
+    following list::
 
-    [True, True, False, True, True, False, False, False, False, ...]
+        [True, True, False, True, True, False, False, False, False, ...]
 
     The optimal trim index will be the 4th position, since it is the first
-    occurrence of a True element with two False elements after it.
+    occurrence of a ``True`` element with two False elements after it.
 
-    If the provided boolean list has no True elements, then the 0 index is
+    If the provided ``bool`` list has no ``True`` elements, then the 0 index is
     returned.
 
     Parameters
     ----------
     biased_list: list
-        List of boolean elements, where True means a biased site.
+        List of ``bool`` elements, where ``True`` means a biased site.
 
     Returns
     -------
-        _ : index position of the biased list for the optimal trim.
+        x : index position of the biased list for the optimal trim.
 
     """
 
@@ -94,7 +104,7 @@ def trim_range(data_file):
     """Assess the optimal trim range for a given FastQC data file.
 
     This function will parse a single FastQC data file, namely the
-    'Per base sequence content' category. It will retrieve the A/T and G/C
+    *'Per base sequence content'* category. It will retrieve the A/T and G/C
     content for each nucleotide position in the reads, and check whether the
     G/C and A/T proportions are between 80% and 120%. If they are, that
     nucleotide position is marked as biased for future removal.
@@ -161,12 +171,12 @@ def trim_range(data_file):
 
 
 def get_sample_trim(p1_data, p2_data):
-    """Get the optimal read trim range from data files of paired FastQ reads
+    """Get the optimal read trim range from data files of paired FastQ reads.
 
     Given the FastQC data report files for paired-end FastQ reads, this
     function will assess the optimal trim range for the 3' and 5' ends of
-    the paired-end reads. This assessment will be based on the 'Per sequence
-    GC content'.
+    the paired-end reads. This assessment will be based on the *'Per sequence
+    GC content'*.
 
     Parameters
     ----------
@@ -199,30 +209,30 @@ def get_sample_trim(p1_data, p2_data):
 
 
 def get_summary(summary_file):
-    """Parses a FastQC summary report file and returns it as a dictionary
+    """Parses a FastQC summary report file and returns it as a dictionary.
 
-    This functio parses a typical FastQC summary report file, retrieving
+    This function parses a typical FastQC summary report file, retrieving
     only the information on the first two columns. For instance, a line could
-    be:
+    be::
 
-    'PASS	Basic Statistics	SH10762A_1.fastq.gz'
+        'PASS	Basic Statistics	SH10762A_1.fastq.gz'
 
     This parser will build a dictionary with the string in the second column
-    as a key and the QC result as the value. In this case, the returned dict
-    would be something like:
+    as a key and the QC result as the value. In this case, the returned
+    ``dict`` would be something like::
 
-    {"Basic Statistics": "PASS"}
+        {"Basic Statistics": "PASS"}
 
     Parameters
     ----------
     summary_file: str
-        Path to FastQC summary report
+        Path to FastQC summary report.
 
     Returns
     -------
-    summary_info: OrderedDict
+    summary_info: :py:data:`OrderedDict`
         Returns the information of the FastQC summary report as an ordered
-        dictionary, with the categories as strings and the QC result as values
+        dictionary, with the categories as strings and the QC result as values.
 
     """
 
@@ -245,17 +255,33 @@ def check_summary_health(summary_file):
 
     Parses the FastQC summary file and tests whether the sample is good
     or not. There are four categories that cannot fail, and two that
-    must pass in order to the sample pass this check
+    must pass in order to the sample pass this check.
+
+    Categories that cannot fail::
+
+        fail_sensitive = [
+            "Per base sequence quality",
+            "Overrepresented sequences",
+            "Sequence Length Distribution",
+            "Per sequence GC content"
+        ]
+
+    Categories that must pass::
+
+        must_pass = [
+            "Per base N content",
+            "Adapter Content"
+        ]
 
     Parameters
     ----------
     summary_file: str
-        Path to FastQC summary file
+        Path to FastQC summary file.
 
     Returns
     -------
-    _ : Boolean
-        Returns True if the sample passes all tests. False if not.
+    x : bool
+        Returns ``True`` if the sample passes all tests. ``False`` if not.
     summary_info : dict
         A dictionary with the FastQC results for each category.
     """
@@ -294,6 +320,24 @@ def check_summary_health(summary_file):
 
 
 def main(fastq_id, result_p1, result_p2):
+    """Main executor of the fastqc_report template.
+
+    Parameters
+    ----------
+    fastq_id : str
+        Sample Identification string.
+    result_p1 : list
+        Two element list containing the path to the FastQC report files to
+        the first FastQ pair.
+        The first must be the nucleotide level report and the second the
+        categorical report.
+    result_p2: list
+        Two element list containing the path to the FastQC report files to
+        the second FastQ pair.
+        The first must be the nucleotide level report and the second the
+        categorical report.
+
+    """
 
     with open("fastqc_health", "w") as health_fh, \
             open("{}_report".format(fastq_id), "w") as rep_fh, \
