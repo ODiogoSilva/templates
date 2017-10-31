@@ -36,6 +36,9 @@ Generated output
     ``STDERR`` message.
     - e.g.: ``'pass'``
 
+Code documentation
+------------------
+
 """
 
 import os

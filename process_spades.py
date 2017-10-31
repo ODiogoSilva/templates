@@ -1,28 +1,42 @@
 #!/usr/bin/env python3
 
 """
-process_spades template for nextflow
-
 Purpose
 -------
 
-This module is intended to process the output of SPAdes.
+This module is intended to process the output of Spades from a single sample.
+The main input is an assembly file produced by spades, which will then be
+filtered according to user-specified parameters.
 
 Expected input
 --------------
-fastq_id: Pair of FastQ file paths.
-    .: 'SampleA'
-assembly: Fasta file with the assembly from SPAdes.
-    .. 'contigs.fasta'
-opts: List of options for processing spades assembly.
-    1. Minimum contig length
-    2. Minimum k-mer coverage
+
+The following variables are expected whether using NextFlow or the
+:py:func:`main` executor.
+
+- ``fastq_id``: Pair of FastQ file paths.
+    - e.g.: ``'SampleA'``
+- ``assembly``: Fasta file with the assembly from SPAdes.
+    - e.g.: ``'contigs.fasta'``
+- ``opts``: List of options for processing spades assembly.
+    1. Minimum contig length.
+        - e.g.: ``'150'``
+    2. Minimum k-mer coverage.
+        - e.g.: ``'2'``
 
 Generated output
 ----------------
-${fastq_id}.assembly.fasta : Fasta files with the filtered assembly
-${fastq_id}.report.fasta : CSV file with the results of the filters for each
-    contig.
+
+(Values within ``${}`` are substituted by the corresponding variable.)
+
+- ``'${fastq_id}.assembly.fasta'`` : Fasta file with the filtered assembly.
+    - e.g.: ``'Sample1.assembly.fasta'``
+- ``${fastq_id}.report.fasta`` : CSV file with the results of the filters for\
+    each contig.
+    - e.g.: ``'Sample1.report.csv'``
+
+Code documentation
+------------------
 
 """
 
@@ -38,52 +52,52 @@ if __file__.endswith(".command.sh"):
 
 
 class Assembly:
+    """Class that parses and filters a Spades Fasta assembly file
+
+    This class parses a SPAdes assembly fasta file, collects a number
+    of summary statistics and metadata from the contigs, filters
+    contigs based on user-defined metrics and writes filtered assemblies
+    and reports.
+
+    Parameters
+    ----------
+    assembly_file : str
+        Path to SPAdes output assembly file.
+    min_contig_len : int
+        Minimum contig length when applying the initial assembly filter.
+    min_kmer_cov : int
+        Minimum k-mer coverage when applying the initial assembly.
+        filter.
+    sample_id : str
+        Name of the sample for the current assembly.
+    """
 
     def __init__(self, assembly_file, min_contig_len, min_kmer_cov,
                  sample_id):
-        """Class that parses and filters a SPAdes fasta assembly file
-
-        This class parses a SPAdes assembly fasta file, collects a number
-        of summary statistics and metadata from the contigs, filters
-        contigs based on user-defined metrics and writes filtered assemblies
-        and reports.
-
-        Parameters
-        ----------
-        assembly_file : str
-            Path to SPAdes output assembly file.
-        min_contig_len : int
-            Minimum contig length when applying the initial assembly filter.
-        min_kmer_cov : int
-            Minimum k-mer coverage when applying the initial assembly.
-            filter.
-        sample_id : str
-            Name of the sample for the current assembly.
-        """
 
         self.contigs = {}
         """
-        Dictionary storing data for each contig
+        dict: Dictionary storing data for each contig.
         """
 
         self.filtered_ids = []
         """
-        List of filtered contig_ids
+        list: List of filtered contig_ids.
         """
 
         self.min_gc = 0.05
         """
-        Sets the minimum GC content on a contig
+        float: Sets the minimum GC content on a contig.
         """
 
         self.sample = sample_id
         """
-        The name of the sample for the assembly
+        str: The name of the sample for the assembly.
         """
 
         self.report = {}
         """
-        Will contain the filtering results for each contig
+        dict: Will contain the filtering results for each contig.
         """
 
         self.filters = [
@@ -91,8 +105,8 @@ class Assembly:
             ["kmer_cov", ">=", min_kmer_cov]
         ]
         """
-        Setting initial filters to check when parsing the assembly file.
-        This can be later changed using the 'filter_contigs' method
+        list: Setting initial filters to check when parsing the assembly file.
+        This can be later changed using the 'filter_contigs' method.
         """
 
         # Parse assembly and populate self.contigs
@@ -103,14 +117,15 @@ class Assembly:
         self.filter_contigs(*self.filters)
 
     def _parse_assembly(self, assembly_file):
-        """Parse a SPAdes assembly fasta file
+        """Parse a Spades assembly fasta file.
 
-        This is a Fasta parsing method that populates the self.contigs
-        attribute with data for each contig in the assembly.
+        This is a Fasta parsing method that populates the
+        :py:attr:`~Assembly.contigs` attribute with data for each contig in the
+        assembly.
 
         The insertion of data on the self.contigs is done by the
-        self._populate_contigs method, which also calculates GC content and
-        proportions.
+        :py:meth:`Assembly._populate_contigs` method, which also calculates
+        GC content and proportions.
 
         Parameters
         ----------
@@ -162,12 +177,12 @@ class Assembly:
             self._populate_contigs(contig_id, header, cov, seq)
 
     def _populate_contigs(self, contig_id, header, cov, sequence):
-        """ Inserts data from a single contig into the self.contigs attribute
+        """ Inserts data from a single contig into\
+         :py:attr:`~Assembly.contigs`.
 
         By providing a contig id, the original header, the coverage that
         is parsed from the header and the sequence, this method will
-        populate the self.contigs attribute. See the __init__ method for
-        details on the contents of the self.contigs dictionary.
+        populate the :py:attr:`~Assembly.contigs` attribute.
 
         Parameters
         ----------
@@ -179,9 +194,6 @@ class Assembly:
             The contig coverage, parsed from the fasta header
         sequence : str
             The complete sequence of the contig.
-
-        Returns
-        -------
 
         """
 
@@ -201,18 +213,18 @@ class Assembly:
 
     @staticmethod
     def _get_gc_content(sequence, length):
-        """Get GC content and proportions
+        """Get GC content and proportions.
 
         Parameters
         ----------
         sequence : str
             The complete sequence of the contig.
         length : int
-            The length of the sequence contig
+            The length of the sequence contig.
 
         Returns
         -------
-        _ : dict
+        x : dict
             Dictionary with the at/gc/n counts and proportions
 
         """
@@ -232,10 +244,12 @@ class Assembly:
 
     @staticmethod
     def _test_truth(x, op, y):
-        """ Test the truth of a comparisong between x and y using an operator.
+        """ Test the truth of a comparisong between x and y using an \
+        ``operator``.
 
-        If you want to compare '100 > 200', this method can be called as
-        self._test_truth(100, ">", 200).
+        If you want to compare '100 > 200', this method can be called as::
+
+            self._test_truth(100, ">", 200).
 
         Parameters
         ----------
@@ -248,8 +262,8 @@ class Assembly:
 
         Returns
         -------
-        _ : bool
-            The truthness of the test
+        x : bool
+            The 'truthness' of the test
         """
 
         ops = {
@@ -262,20 +276,21 @@ class Assembly:
         return ops[op](x, y)
 
     def filter_contigs(self, *comparisons):
-        """Filters the contigs of the assembly according to user provided
-        comparisons
+        """Filters the contigs of the assembly according to user provided\
+        comparisons.
 
         The comparisons must be a list of three elements with the
-        self.contigs key, operator and test value. For example, to filter
-        contigs with a minimum length of 250, a comparison would be:
+        :py:attr:`~Assembly.contigs` key, operator and test value. For
+        example, to filter contigs with a minimum length of 250, a comparison
+        would be::
 
-        self.filter_contigs(["length", ">=", 250])
+            self.filter_contigs(["length", ">=", 250])
 
-        The filtered contig ids will be stored in the self.filtered_ids
-        list.
+        The filtered contig ids will be stored in the
+        :py:attr:`~Assembly.filtered_ids` list.
 
         The result of the test for all contigs will be stored in the
-        self.report dictionary.
+        :py:attr:`~Assembly.report` dictionary.
 
         Parameters
         ----------
@@ -307,11 +322,11 @@ class Assembly:
                     self.report[contig_id] = "pass"
 
     def get_assembly_length(self):
-        """Returns the length of the assembly, without the filtered contigs
+        """Returns the length of the assembly, without the filtered contigs.
 
         Returns
         -------
-        _ : int
+        x : int
             Total length of the assembly.
 
         """
@@ -323,15 +338,15 @@ class Assembly:
     def write_assembly(self, output_file, filtered=True):
         """Writes the assembly to a new file.
 
-        The filtered option controls whether the new assembly will be filtered
-        or not.
+        The ``filtered`` option controls whether the new assembly will be
+        filtered or not.
 
         Parameters
         ----------
         output_file : str
             Name of the output assembly file.
         filtered : bool
-            If True, does not include filtered ids.
+            If ``True``, does not include filtered ids.
         """
 
         with open(output_file, "w") as fh:
@@ -359,6 +374,20 @@ class Assembly:
 
 
 def main(fastq_id, assembly_file, gsize, opts):
+    """Main executor of the process_spades template.
+
+    Parameters
+    ----------
+    fastq_id : str
+        Sample Identification string.
+    assembly_file : str
+        Path to the assembly file generated by Spades.
+    gsize : int
+        Estimate of genome size.
+    opts : list
+        List of options for processing spades assembly.
+
+    """
 
     min_contig_len, min_kmer_cov = [int(x) for x in opts]
 
