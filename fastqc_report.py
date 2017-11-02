@@ -26,7 +26,7 @@ The following variables are expected whether using NextFlow or the
     - e.g.: ``'SampleA_2_data SampleA_2_summary'``
 
 - ``opts`` : *Specify additional arguments for executing fastqc_report. \
-    The arguments should be a string of command line arguments,
+    The arguments should be a string of command line arguments,\
     The accepted arguments are:*
     - ``'--ignore-tests'`` : Ignores test results from FastQC categorical\
     summary. This is used in the first run of FastQC.
