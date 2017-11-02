@@ -341,6 +341,13 @@ def check_summary_health(summary_file):
 def main(fastq_id, result_p1, result_p2, opts):
     """Main executor of the fastqc_report template.
 
+    If the "--ignore-tests" option is present in the ``opts`` argument,
+    the health check of the sample will be bypassed, and it will pass the
+    check. This option is used in the first run of FastQC. In the second
+    run (after filtering with trimmomatic) this option is not provided and
+    the samples are submitted to a health check before proceeding in the
+    pipeline.
+
     Parameters
     ----------
     fastq_id : str
