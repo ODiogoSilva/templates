@@ -25,6 +25,12 @@ The following variables are expected whether using NextFlow or the
 - ``result_p2`` : Path to both FastQC result files for pair 2
     - e.g.: ``'SampleA_2_data SampleA_2_summary'``
 
+- ``opts`` : *Specify additional arguments for executing fastqc_report. \
+    The arguments should be a string of command line arguments,
+    The accepted arguments are:*
+    - ``'--ignore-tests'`` : Ignores test results from FastQC categorical\
+    summary. This is used in the first run of FastQC.
+
 Generated output
 ----------------
 
@@ -52,6 +58,7 @@ if __file__.endswith(".command.sh"):
     RESULT_P1 = '$result_p1'.split()
     RESULT_P2 = '$result_p2'.split()
     FASTQ_ID = '$fastq_id'
+    OPTS = '$opts'.split()
 
 
 def get_trim_index(biased_list):
@@ -331,7 +338,7 @@ def check_summary_health(summary_file):
     return health, failed
 
 
-def main(fastq_id, result_p1, result_p2):
+def main(fastq_id, result_p1, result_p2, opts):
     """Main executor of the fastqc_report template.
 
     Parameters
@@ -348,6 +355,8 @@ def main(fastq_id, result_p1, result_p2):
         the second FastQ pair.
         The first must be the nucleotide level report and the second the
         categorical report.
+    opts : list
+        List of arbitrary options. See `Expected input`_.
 
     """
 
@@ -360,26 +369,27 @@ def main(fastq_id, result_p1, result_p2):
         # each pair. If both pairs pass the check, send the 'pass' information
         # to the 'fastqc_health' channel. If at least one fails, send the
         # summary report.
-        for p, fastqc_summary in enumerate([result_p1[1], result_p2[1]]):
+        if "--ignore-tests" not in opts:
+            for p, fastqc_summary in enumerate([result_p1[1], result_p2[1]]):
 
-            # Get the boolean health variable and a list of failed categories,
-            # if any
-            health, f_cat = check_summary_health(fastqc_summary)
+                # Get the boolean health variable and a list of failed
+                # categories, if any
+                health, f_cat = check_summary_health(fastqc_summary)
 
-            # Rename category summary file to the channel that will publish
-            # The results
-            output_file = "{}_{}_summary.txt".format(fastq_id, p)
-            os.rename(fastqc_summary, output_file)
+                # Rename category summary file to the channel that will publish
+                # The results
+                output_file = "{}_{}_summary.txt".format(fastq_id, p)
+                os.rename(fastqc_summary, output_file)
 
-            # If one of the health flags returns False, send the summary report
-            # through the status channel
-            if not health:
-                health_fh.write("fail")
-                trim_fh.write("fail")
-                rep_fh.write("{}, {}\\n".format(fastq_id, ",".join(f_cat)))
-                trep_fh.write("{},fail,fail\\n".format(fastq_id))
+                # If one of the health flags returns False, send the summary
+                # report through the status channel
+                if not health:
+                    health_fh.write("fail")
+                    trim_fh.write("fail")
+                    rep_fh.write("{}, {}\\n".format(fastq_id, ",".join(f_cat)))
+                    trep_fh.write("{},fail,fail\\n".format(fastq_id))
 
-                return
+                    return
 
         health_fh.write("pass")
         rep_fh.write("{}, pass\\n".format(fastq_id))
@@ -394,4 +404,4 @@ def main(fastq_id, result_p1, result_p2):
 
 
 if __name__ == '__main__':
-    main(FASTQ_ID, RESULT_P1, RESULT_P2)
+    main(FASTQ_ID, RESULT_P1, RESULT_P2, OPTS)
