@@ -320,12 +320,12 @@ def check_summary_health(summary_file):
         # Check for fail sensitive
         if cat in fail_sensitive and test == "FAIL":
             health = False
-            failed.append(cat)
+            failed.append("{}:{}".format(cat, test))
 
         # Check for must pass
         if cat in must_pass and test != "PASS":
             health = False
-            failed.append(cat)
+            failed.append("{}:{}".format(cat, test))
 
     # Passed all tests
     return health, failed
