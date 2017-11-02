@@ -258,7 +258,8 @@ def check_summary_health(summary_file):
 
     Parses the FastQC summary file and tests whether the sample is good
     or not. There are four categories that cannot fail, and two that
-    must pass in order to the sample pass this check.
+    must pass in order for the sample pass this check. If the sample fails
+    the quality checks, a list with the failing categories is also returned.
 
     Categories that cannot fail::
 
@@ -285,8 +286,9 @@ def check_summary_health(summary_file):
     -------
     x : bool
         Returns ``True`` if the sample passes all tests. ``False`` if not.
-    summary_info : dict
-        A dictionary with the FastQC results for each category.
+    summary_info : list
+        A list with the FastQC categories that failed the tests. Is empty
+        if the sample passes all tests.
     """
 
     # Store the summary categories that cannot fail. If they fail, do not
@@ -308,18 +310,25 @@ def check_summary_health(summary_file):
     # Get summary dictionary
     summary_info = get_summary(summary_file)
 
+    # This flag will change to False if one of the tests fails
+    health = True
+    # List of failing categories
+    failed = []
+
     for cat, test in summary_info.items():
 
         # Check for fail sensitive
         if cat in fail_sensitive and test == "FAIL":
-            return False, summary_info
+            health = False
+            failed.append(cat)
 
         # Check for must pass
         if cat in must_pass and test != "PASS":
-            return False, summary_info
+            health = False
+            failed.append(cat)
 
     # Passed all tests
-    return True, summary_info
+    return health, failed
 
 
 def main(fastq_id, result_p1, result_p2):
@@ -343,8 +352,9 @@ def main(fastq_id, result_p1, result_p2):
     """
 
     with open("fastqc_health", "w") as health_fh, \
-            open("{}_report".format(fastq_id), "w") as rep_fh, \
-            open("optimal_trim", "w") as trim_fh:
+            open("{}_trim_report".format(fastq_id), "w") as trep_fh, \
+            open("optimal_trim", "w") as trim_fh, \
+            open("{}_status_report".format(fastq_id), "w") as rep_fh:
 
         # Perform health check according to the FastQC summary report for
         # each pair. If both pairs pass the check, send the 'pass' information
@@ -352,7 +362,9 @@ def main(fastq_id, result_p1, result_p2):
         # summary report.
         for p, fastqc_summary in enumerate([result_p1[1], result_p2[1]]):
 
-            health, summary_info = check_summary_health(fastqc_summary)
+            # Get the boolean health variable and a list of failed categories,
+            # if any
+            health, f_cat = check_summary_health(fastqc_summary)
 
             # Rename category summary file to the channel that will publish
             # The results
@@ -362,23 +374,23 @@ def main(fastq_id, result_p1, result_p2):
             # If one of the health flags returns False, send the summary report
             # through the status channel
             if not health:
-                for k, v in summary_info.items():
-                    health_fh.write("{}: {}\\n".format(k, v))
-
+                health_fh.write("fail")
                 trim_fh.write("fail")
-                rep_fh.write("{},fail,fail\\n".format(fastq_id))
+                rep_fh.write("{}, {}\\n".format(fastq_id, ",".join(f_cat)))
+                trep_fh.write("{},fail,fail\\n".format(fastq_id))
 
                 return
 
         health_fh.write("pass")
+        rep_fh.write("{}, pass\\n".format(fastq_id))
 
         # Get optimal trimming range for sample, based on the per base sequence
         # content
         optimal_trim = get_sample_trim(result_p1[0], result_p2[0])
         trim_fh.write("{}".format(" ".join([str(x) for x in optimal_trim])))
 
-        rep_fh.write("{},{},{}\\n".format(fastq_id, optimal_trim[0],
-                                          optimal_trim[1]))
+        trep_fh.write("{},{},{}\\n".format(fastq_id, optimal_trim[0],
+                                           optimal_trim[1]))
 
 
 if __name__ == '__main__':
