@@ -87,7 +87,7 @@ if __file__.endswith(".command.sh"):
     FASTQ_ID = '$fastq_id'
     GSIZE = float('$gsize')
     MINIMUM_COVERAGE = float('$cov')
-    OPTS = '$opts'
+    OPTS = '$opts'.split()
 
 RANGES = {
     'Sanger': [33, (33, 73)],
