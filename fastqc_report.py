@@ -359,16 +359,18 @@ def main(fastq_id, result_p1, result_p2):
             if not health:
                 for k, v in summary_info.items():
                     health_fh.write("{}: {}\\n".format(k, v))
-                    trim_fh.write("fail")
-                    rep_fh.write("{},fail,fail\\n".format(fastq_id))
+
+                trim_fh.write("fail")
+                rep_fh.write("{},fail,fail\\n".format(fastq_id))
+
                 return
-            else:
-                health_fh.write("pass")
 
             # Rename category summary file to the channel that will publish
             # The results
             output_file = "{}_{}_summary.txt".format(fastq_id, p)
             os.rename(fastqc_summary, output_file)
+
+        health_fh.write("pass")
 
         # Get optimal trimming range for sample, based on the per base sequence
         # content
