@@ -354,6 +354,11 @@ def main(fastq_id, result_p1, result_p2):
 
             health, summary_info = check_summary_health(fastqc_summary)
 
+            # Rename category summary file to the channel that will publish
+            # The results
+            output_file = "{}_{}_summary.txt".format(fastq_id, p)
+            os.rename(fastqc_summary, output_file)
+
             # If one of the health flags returns False, send the summary report
             # through the status channel
             if not health:
@@ -364,11 +369,6 @@ def main(fastq_id, result_p1, result_p2):
                 rep_fh.write("{},fail,fail\\n".format(fastq_id))
 
                 return
-
-            # Rename category summary file to the channel that will publish
-            # The results
-            output_file = "{}_{}_summary.txt".format(fastq_id, p)
-            os.rename(fastqc_summary, output_file)
 
         health_fh.write("pass")
 
