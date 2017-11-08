@@ -367,7 +367,7 @@ def main(fastq_id, result_p1, result_p2, opts):
 
     """
 
-    with open("fastqc_health", "w") as health_fh, \
+    with open(".status", "w") as status_fh, \
             open("{}_trim_report".format(fastq_id), "w") as trep_fh, \
             open("optimal_trim", "w") as trim_fh, \
             open("{}_status_report".format(fastq_id), "w") as rep_fh:
@@ -391,14 +391,14 @@ def main(fastq_id, result_p1, result_p2, opts):
                 # If one of the health flags returns False, send the summary
                 # report through the status channel
                 if not health:
-                    health_fh.write("fail")
+                    status_fh.write("fail")
                     trim_fh.write("fail")
                     rep_fh.write("{}, {}\\n".format(fastq_id, ",".join(f_cat)))
                     trep_fh.write("{},fail,fail\\n".format(fastq_id))
 
                     return
 
-        health_fh.write("pass")
+        status_fh.write("pass")
         rep_fh.write("{}, pass\\n".format(fastq_id))
 
         # Get optimal trimming range for sample, based on the per base sequence
