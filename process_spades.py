@@ -389,26 +389,33 @@ def main(fastq_id, assembly_file, gsize, opts):
 
     """
 
-    min_contig_len, min_kmer_cov = [int(x) for x in opts]
+    try:
+        min_contig_len, min_kmer_cov = [int(x) for x in opts]
 
-    # Parse the spades assembly file and perform the first filtering.
-    spades_assembly = Assembly(assembly_file, min_contig_len, min_kmer_cov,
-                               fastq_id)
+        # Parse the spades assembly file and perform the first filtering.
+        spades_assembly = Assembly(assembly_file, min_contig_len, min_kmer_cov,
+                                   fastq_id)
 
-    # Check if assembly size of the first assembly is lower than 80% of the
-    # estimated genome size. If True, perform the filtering without the
-    # k-mer coverage filter
-    if spades_assembly.get_assembly_length() < gsize * 1000000 * 0.8:
-        spades_assembly.filter_contigs(*[
-            ["length", ">=", min_contig_len]
-        ])
+        # Check if assembly size of the first assembly is lower than 80% of the
+        # estimated genome size. If True, perform the filtering without the
+        # k-mer coverage filter
+        if spades_assembly.get_assembly_length() < gsize * 1000000 * 0.8:
+            spades_assembly.filter_contigs(*[
+                ["length", ">=", min_contig_len]
+            ])
 
-    # Write filtered assembly
-    output_assembly = "{}.assembly.fasta".format(fastq_id)
-    spades_assembly.write_assembly(output_assembly)
-    # Write report
-    output_report = "{}.report.csv".format(fastq_id)
-    spades_assembly.write_report(output_report)
+        # Write filtered assembly
+        output_assembly = "{}.assembly.fasta".format(fastq_id)
+        spades_assembly.write_assembly(output_assembly)
+        # Write report
+        output_report = "{}.report.csv".format(fastq_id)
+        spades_assembly.write_report(output_report)
+
+        with open(".status", "w") as fh:
+            fh.write("pass")
+    except:
+        with open(".status", "w") as fh:
+            fh.write("fail")
 
 
 if __name__ == '__main__':
