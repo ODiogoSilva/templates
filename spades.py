@@ -142,9 +142,9 @@ def main(fastq_id, fastq_pair, max_len, kmer, opts):
     p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
     stdout, stderr = p.communicate()
 
-    with open("spades_status", "w") as fh:
+    with open(".status", "w") as fh:
         if p.returncode != 0:
-            fh.write(str(stdout))
+            fh.write("fail")
             return
         else:
             fh.write("pass")
