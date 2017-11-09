@@ -132,9 +132,9 @@ def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
 
     # Check if trimmomatic ran successfully. If not, write the error message
     # to the status channel and exit.
-    with open("trimmomatic_status", "w") as fh:
+    with open(".status", "w") as fh:
         if p.returncode != 0:
-            fh.write(str(stderr))
+            fh.write("fail")
             return
         else:
             fh.write("pass")

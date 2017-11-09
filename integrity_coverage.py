@@ -275,7 +275,8 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             open("{}_phred".format(fastq_id), "w") as phred_fh, \
             open("{}_coverage".format(fastq_id), "w") as cov_fh, \
             open("{}_report".format(fastq_id), "w") as cov_rep, \
-            open("{}_max_len".format(fastq_id), "w") as len_fh:
+            open("{}_max_len".format(fastq_id), "w") as len_fh, \
+            open(".status", "w") as status_fh:
 
         try:
             # Iterate over both pair files sequentially using itertools.chain
@@ -330,11 +331,13 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
                 cov_rep.write("{},{},{}\\n".format(
                     fastq_id, str(exp_coverage), "PASS"))
                 cov_fh.write(str(exp_coverage))
+                status_fh.write("pass")
             # Estimated coverage does not pass minimum threshold
             else:
                 cov_rep.write("{},{},{}\\n".format(
                     fastq_id, str(exp_coverage), "FAIL"))
                 cov_fh.write("fail")
+                status_fh.write("fail")
 
             # Maximum read length
             len_fh.write("{}".format(max_read_length))
@@ -343,6 +346,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
         except EOFError:
             for fh in [enc_fh, phred_fh, cov_fh, cov_rep, len_fh]:
                 fh.write("corrupt")
+                status_fh.write("fail")
 
 
 if __name__ == "__main__":

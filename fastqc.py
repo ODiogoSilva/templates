@@ -133,13 +133,14 @@ def main(fastq_pair, adapter_file, cpus):
     stdout, stderr = p.communicate()
 
     # Check if the FastQC output was correctly generated.
-    with open("fastq_status", "w") as fh:
+    with open(".status", "w") as fh:
         for fastq in fastq_pair:
-            fpath = join(fastq.rsplit(".", 2)[0] + "_fastqc", "fastqc_data.txt")
+            fpath = join(fastq.rsplit(".", 2)[0] + "_fastqc",
+                         "fastqc_data.txt")
             # If the FastQC output does not exist, pass the STDERR to
             # the output status channel and exit
             if not exists(fpath):
-                fh.write(str(stderr))
+                fh.write("fail")
                 return
 
         # If the output directories exist, write 'pass' to the output status
