@@ -1,32 +1,51 @@
 #!/usr/bin/env python3
 
 """
-fastqc_report template for nextflow
-
 Purpose
 -------
 
-This module is intended parse the results of FastQC for paired end FastQ
-samples
+This module is intended parse the results of FastQC for paired end FastQ \
+samples. It parses two reports:
+
+    - Categorical report
+    - Nucleotide level report.
 
 Expected input
 --------------
-fastq_id: Sample Identification string
-    .: 'SampleA'
-result_p1: Path to FastQC result files for pair 1
-    .: 'SampleA_1_data SampleA_1_summary'
-result_p2 Path to FastQC result files for pair 2
-    .: 'SampleA_2_data SampleA_2_summary'
+
+The following variables are expected whether using NextFlow or the
+:py:func:`main` executor.
+
+- ``fastq_id`` : Sample identification string
+    - e.g.: ``'SampleA'``
+
+- ``result_p1`` : Path to both FastQC result files for pair 1
+    - e.g.: ``'SampleA_1_data SampleA_1_summary'``
+
+- ``result_p2`` : Path to both FastQC result files for pair 2
+    - e.g.: ``'SampleA_2_data SampleA_2_summary'``
+
+- ``opts`` : *Specify additional arguments for executing fastqc_report. \
+    The arguments should be a string of command line arguments,\
+    The accepted arguments are:*
+    - ``'--ignore-tests'`` : Ignores test results from FastQC categorical\
+    summary. This is used in the first run of FastQC.
 
 Generated output
 ----------------
-fastqc_health: Stores the health check for the current sample. If it passes
-    all checks, it contains only the string 'pass'. Otherwise, contains
+
+The generated output are output files that contain an object, usually a string.
+
+- ``fastqc_health`` : Stores the health check for the current sample. If it
+    passes all checks, it contains only the string 'pass'. Otherwise, contains
     the summary categories and their respective results
-    .: 'pass'
-optimal_trim: Stores a tuple with the optimal trimming positions for 5' and
-    3' ends of the reads.
-    .: '15 151'
+    - e.g.: ``'pass'``
+- ``optimal_trim`` : Stores a tuple with the optimal trimming positions for 5'
+    and 3' ends of the reads.
+    - e.g.: ``'15 151'``
+
+Code documentation
+------------------
 
 """
 
@@ -39,35 +58,36 @@ if __file__.endswith(".command.sh"):
     RESULT_P1 = '$result_p1'.split()
     RESULT_P2 = '$result_p2'.split()
     FASTQ_ID = '$fastq_id'
+    OPTS = '$opts'.split()
 
 
 def get_trim_index(biased_list):
-    """Returns the trim index from a boolean list
+    """Returns the trim index from a ``bool`` list
 
-    Provided with a list of boolean elements ([False, False, True, True]),
+    Provided with a list of ``bool`` elements (``[False, False, True, True]``),
     this function will assess the index of the list that minimizes the number
     of True elements (biased positions) at the extremities. To do so,
     it will iterate over the boolean list and find an index position where
-    there are two consecutive False elements after a True element. This
+    there are two consecutive ``False`` elements after a ``True`` element. This
     will be considered as an optimal trim position. For example, in the
-    following list:
+    following list::
 
-    [True, True, False, True, True, False, False, False, False, ...]
+        [True, True, False, True, True, False, False, False, False, ...]
 
     The optimal trim index will be the 4th position, since it is the first
-    occurrence of a True element with two False elements after it.
+    occurrence of a ``True`` element with two False elements after it.
 
-    If the provided boolean list has no True elements, then the 0 index is
+    If the provided ``bool`` list has no ``True`` elements, then the 0 index is
     returned.
 
     Parameters
     ----------
     biased_list: list
-        List of boolean elements, where True means a biased site.
+        List of ``bool`` elements, where ``True`` means a biased site.
 
     Returns
     -------
-        _ : index position of the biased list for the optimal trim.
+        x : index position of the biased list for the optimal trim.
 
     """
 
@@ -94,7 +114,7 @@ def trim_range(data_file):
     """Assess the optimal trim range for a given FastQC data file.
 
     This function will parse a single FastQC data file, namely the
-    'Per base sequence content' category. It will retrieve the A/T and G/C
+    *'Per base sequence content'* category. It will retrieve the A/T and G/C
     content for each nucleotide position in the reads, and check whether the
     G/C and A/T proportions are between 80% and 120%. If they are, that
     nucleotide position is marked as biased for future removal.
@@ -161,12 +181,12 @@ def trim_range(data_file):
 
 
 def get_sample_trim(p1_data, p2_data):
-    """Get the optimal read trim range from data files of paired FastQ reads
+    """Get the optimal read trim range from data files of paired FastQ reads.
 
     Given the FastQC data report files for paired-end FastQ reads, this
     function will assess the optimal trim range for the 3' and 5' ends of
-    the paired-end reads. This assessment will be based on the 'Per sequence
-    GC content'.
+    the paired-end reads. This assessment will be based on the *'Per sequence
+    GC content'*.
 
     Parameters
     ----------
@@ -199,30 +219,30 @@ def get_sample_trim(p1_data, p2_data):
 
 
 def get_summary(summary_file):
-    """Parses a FastQC summary report file and returns it as a dictionary
+    """Parses a FastQC summary report file and returns it as a dictionary.
 
-    This functio parses a typical FastQC summary report file, retrieving
+    This function parses a typical FastQC summary report file, retrieving
     only the information on the first two columns. For instance, a line could
-    be:
+    be::
 
-    'PASS	Basic Statistics	SH10762A_1.fastq.gz'
+        'PASS	Basic Statistics	SH10762A_1.fastq.gz'
 
     This parser will build a dictionary with the string in the second column
-    as a key and the QC result as the value. In this case, the returned dict
-    would be something like:
+    as a key and the QC result as the value. In this case, the returned
+    ``dict`` would be something like::
 
-    {"Basic Statistics": "PASS"}
+        {"Basic Statistics": "PASS"}
 
     Parameters
     ----------
     summary_file: str
-        Path to FastQC summary report
+        Path to FastQC summary report.
 
     Returns
     -------
-    summary_info: OrderedDict
+    summary_info: :py:data:`OrderedDict`
         Returns the information of the FastQC summary report as an ordered
-        dictionary, with the categories as strings and the QC result as values
+        dictionary, with the categories as strings and the QC result as values.
 
     """
 
@@ -245,19 +265,37 @@ def check_summary_health(summary_file):
 
     Parses the FastQC summary file and tests whether the sample is good
     or not. There are four categories that cannot fail, and two that
-    must pass in order to the sample pass this check
+    must pass in order for the sample pass this check. If the sample fails
+    the quality checks, a list with the failing categories is also returned.
+
+    Categories that cannot fail::
+
+        fail_sensitive = [
+            "Per base sequence quality",
+            "Overrepresented sequences",
+            "Sequence Length Distribution",
+            "Per sequence GC content"
+        ]
+
+    Categories that must pass::
+
+        must_pass = [
+            "Per base N content",
+            "Adapter Content"
+        ]
 
     Parameters
     ----------
     summary_file: str
-        Path to FastQC summary file
+        Path to FastQC summary file.
 
     Returns
     -------
-    _ : Boolean
-        Returns True if the sample passes all tests. False if not.
-    summary_info : dict
-        A dictionary with the FastQC results for each category.
+    x : bool
+        Returns ``True`` if the sample passes all tests. ``False`` if not.
+    summary_info : list
+        A list with the FastQC categories that failed the tests. Is empty
+        if the sample passes all tests.
     """
 
     # Store the summary categories that cannot fail. If they fail, do not
@@ -279,58 +317,98 @@ def check_summary_health(summary_file):
     # Get summary dictionary
     summary_info = get_summary(summary_file)
 
+    # This flag will change to False if one of the tests fails
+    health = True
+    # List of failing categories
+    failed = []
+
     for cat, test in summary_info.items():
 
         # Check for fail sensitive
         if cat in fail_sensitive and test == "FAIL":
-            return False, summary_info
+            health = False
+            failed.append("{}:{}".format(cat, test))
 
         # Check for must pass
         if cat in must_pass and test != "PASS":
-            return False, summary_info
+            health = False
+            failed.append("{}:{}".format(cat, test))
 
     # Passed all tests
-    return True, summary_info
+    return health, failed
 
 
-def main(fastq_id, result_p1, result_p2):
+def main(fastq_id, result_p1, result_p2, opts):
+    """Main executor of the fastqc_report template.
+
+    If the "--ignore-tests" option is present in the ``opts`` argument,
+    the health check of the sample will be bypassed, and it will pass the
+    check. This option is used in the first run of FastQC. In the second
+    run (after filtering with trimmomatic) this option is not provided and
+    the samples are submitted to a health check before proceeding in the
+    pipeline.
+
+    Parameters
+    ----------
+    fastq_id : str
+        Sample Identification string.
+    result_p1 : list
+        Two element list containing the path to the FastQC report files to
+        the first FastQ pair.
+        The first must be the nucleotide level report and the second the
+        categorical report.
+    result_p2: list
+        Two element list containing the path to the FastQC report files to
+        the second FastQ pair.
+        The first must be the nucleotide level report and the second the
+        categorical report.
+    opts : list
+        List of arbitrary options. See `Expected input`_.
+
+    """
 
     with open("fastqc_health", "w") as health_fh, \
-            open("{}_report".format(fastq_id), "w") as rep_fh, \
-            open("optimal_trim", "w") as trim_fh:
+            open("{}_trim_report".format(fastq_id), "w") as trep_fh, \
+            open("optimal_trim", "w") as trim_fh, \
+            open("{}_status_report".format(fastq_id), "w") as rep_fh:
 
         # Perform health check according to the FastQC summary report for
         # each pair. If both pairs pass the check, send the 'pass' information
         # to the 'fastqc_health' channel. If at least one fails, send the
         # summary report.
-        for p, fastqc_summary in enumerate([result_p1[1], result_p2[1]]):
+        if "--ignore-tests" not in opts:
+            for p, fastqc_summary in enumerate([result_p1[1], result_p2[1]]):
 
-            health, summary_info = check_summary_health(fastqc_summary)
+                # Get the boolean health variable and a list of failed
+                # categories, if any
+                health, f_cat = check_summary_health(fastqc_summary)
 
-            # If one of the health flags returns False, send the summary report
-            # through the status channel
-            if not health:
-                for k, v in summary_info.items():
-                    health_fh.write("{}: {}\\n".format(k, v))
+                # Rename category summary file to the channel that will publish
+                # The results
+                output_file = "{}_{}_summary.txt".format(fastq_id, p)
+                os.rename(fastqc_summary, output_file)
+
+                # If one of the health flags returns False, send the summary
+                # report through the status channel
+                if not health:
+                    health_fh.write("fail")
                     trim_fh.write("fail")
-                    rep_fh.write("{},fail,fail\\n".format(fastq_id))
-                return
-            else:
-                health_fh.write("pass")
+                    rep_fh.write("{}, {}\\n".format(fastq_id, ",".join(f_cat)))
+                    trep_fh.write("{},fail,fail\\n".format(fastq_id))
 
-            # Rename category summary file to the channel that will publish
-            # The results
-            output_file = "{}_{}_summary.txt".format(fastq_id, p)
-            os.rename(fastqc_summary, output_file)
+                    return
+
+        health_fh.write("pass")
+        rep_fh.write("{}, pass\\n".format(fastq_id))
 
         # Get optimal trimming range for sample, based on the per base sequence
         # content
         optimal_trim = get_sample_trim(result_p1[0], result_p2[0])
         trim_fh.write("{}".format(" ".join([str(x) for x in optimal_trim])))
 
-        rep_fh.write("{},{},{}\\n".format(fastq_id, optimal_trim[0],
-                                          optimal_trim[1]))
+        trep_fh.write("{},{},{}\\n".format(fastq_id, optimal_trim[0],
+                                           optimal_trim[1]))
 
 
 if __name__ == '__main__':
-    main(FASTQ_ID, RESULT_P1, RESULT_P2)
+    main(FASTQ_ID, RESULT_P1, RESULT_P2, OPTS)

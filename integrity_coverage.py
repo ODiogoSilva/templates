@@ -1,57 +1,76 @@
 #!/usr/bin/env python3
 
 """
-integrity_coverage template for nextflow
-
 Purpose
-=======
+-------
 
-This module has three purposes while iterating over pairs of FastQ files:
-    - Check integrity of FastQ (corrupted files)
-    - Guess the encoding of FastQ files (this can be turned off in the 'opts' \
-    argument, see below.)
-    - Estimate coverage for each sample
+This module receives paired FastQ files, a genome size estimate and a minimum
+coverage threshold and has three purposes while iterating over the FastQ files:
+
+    - Checks the integrity of FastQ files (corrupted files).
+    - Guesses the encoding of FastQ files (this can be turned off in the \
+    ``opts`` argument).
+    - Estimates the coverage for each sample.
 
 Expected input
-==============
+--------------
 
-fastq_id: Sample Identification string
-    .: 'SampleA'
-fastq_pair: Pair of FastQ file paths
-    .: 'SampleA_1.fastq.gz SampleA_2.fastq.gz'
-gsize: Expected genome size
-    .: '2.5'
-cov: Minimum coverage threshold
-    .: '15'
-opts: Specify additional arguments for executing integrity_coverage. The
-    arguments should be a string of command line arguments, such as '-e'.
-    The accepted arguments are:
-        '-e' : Skip encoding guess.
+The following variables are expected whether using NextFlow or the
+:py:func:`main` executor.
+
+- ``fastq_id`` : *Sample Identification string*
+    - e.g.: ``'SampleA'``
+
+- ``fastq_pair`` : *Pair of FastQ file paths*
+    - e.g.: ``'SampleA_1.fastq.gz SampleA_2.fastq.gz'``
+
+- ``gsize`` : *Expected genome size*
+    - e.g.: ``'2.5'``
+
+- ``cov`` : *Minimum coverage threshold*
+    - e.g.: ``'15'``
+
+- ``opts`` : *Specify additional arguments for executing integrity_coverage. \
+    The arguments should be a string of command line arguments, such as \
+    '-e'. The accepted arguments are:*
+    - ``'-e'`` : Skip encoding guess.
 
 Generated output
-================
+----------------
 
-'${fastq_id}_encoding' : Stores the encoding for the sample FastQ. If no
+The generated output are output files that contain an object, usually a string.
+(Values within ``${}`` are substituted by the corresponding variable.)
+
+- ``${fastq_id}_encoding`` : Stores the encoding for the sample FastQ. If no \
     encoding could be guessed, write 'None' to file.
-    .: 'Illumina-1.8' or 'None'
-'${fastq_id}_phred' : Stores the phred value for the sample FastQ. If no
-    phred could be guessed, write 'None' to file.
-    .: '33' or 'None'
-'${fastq_id}_coverage' : Stores the expected coverage of the samples,
-    based on a given genome size.
-    .: '112' or 'fail'
-'${fastq_id}_report' : Stores the report on the expected coverage
-    estimation. This string written in this file will appear in the
-    coverage report.
-    .: '${fastq_id}, 112, PASS'
-'${fastq_id}_max_len : Stores the maximum read length for the current sample
-    .: '152'
+    - e.g.: ``'Illumina-1.8'`` or ``'None'``
 
-Note
-----
+- ``${fastq_id}_phred`` : Stores the phred value for the sample FastQ. If no \
+    phred could be guessed, write 'None' to file.
+    - ``'33'`` or ``'None'``
+
+- ``${fastq_id}_coverage`` : Stores the expected coverage of the samples, \
+    based on a given genome size.
+    - ``'112'`` or ``'fail'``
+
+- ``${fastq_id}_report`` : Stores the report on the expected coverage \
+    estimation. This string written in this file will appear in the \
+    coverage report.
+    - ``'${fastq_id}, 112, PASS'``
+
+- ``${fastq_id}_max_len`` : Stores the maximum read length for the current \
+    sample.
+    - ``'152'``
+
+Notes
+-----
 
 In case of a corrupted sample, all expected output files should have
-'corrupt' written.
+``'corrupt'`` written.
+
+
+Code documentation
+------------------
 
 """
 
@@ -68,7 +87,7 @@ if __file__.endswith(".command.sh"):
     FASTQ_ID = '$fastq_id'
     GSIZE = float('$gsize')
     MINIMUM_COVERAGE = float('$cov')
-    OPTS = '$opts'
+    OPTS = '$opts'.split()
 
 RANGES = {
     'Sanger': [33, (33, 73)],
@@ -77,6 +96,11 @@ RANGES = {
     'Illumina-1.3': [64, (64, 104)],
     'Illumina-1.5': [64, (66, 105)]
 }
+"""
+dict: Dictionary containing the encoding values for several fastq formats. The
+key contains the format and the value contains a list with the corresponding
+phred score and a list with the range of encodings. 
+"""
 
 COPEN = {
     "gz": gzip.open,
@@ -84,38 +108,41 @@ COPEN = {
     "zip": zipfile.ZipFile
 }
 
-# To support NextFlow execution, the "\" characters have to be escaped
 MAGIC_DICT = {
     b"\\x1f\\x8b\\x08": "gz",
     b"\\x42\\x5a\\x68": "bz2",
     b"\\x50\\x4b\\x03\\x04": "zip"
 }
+"""
+dict: Dictionary containing the binary signatures for three compression formats
+(gzip, bzip2 and zip).
+"""
 
 
 def guess_file_compression(file_path, magic_dict=None):
-    """Guess the compression of an input file.
+    """Guesses the compression of an input file.
 
     This function guesses the compression of a given file by checking for
-    a binary signature at the beginning of the file. This signatures are
-    stored in the `MAGIC_DICT` dictionary. The supported compression formats
-    are gzip, bzip2 and zip. If none of the signatures in this dictionary
-    are found at the beginning of the file, it returns None
+    a binary signature at the beginning of the file. These signatures are
+    stored in the :py:data:`MAGIC_DICT` dictionary. The supported compression
+    formats are gzip, bzip2 and zip. If none of the signatures in this
+    dictionary are found at the beginning of the file, it returns ``None``.
 
     Parameters
     ----------
     file_path : str
         Path to input file.
-    magic_dict : dict
+    magic_dict : dict, optional
         Dictionary containing the signatures of the compression types. The
         key should be the binary signature and the value should be the
-        compression format
+        compression format. If left ``None``, it falls back to
+        :py:data:`MAGIC_DICT`.
 
     Returns
     -------
     file_type : str or None
         If a compression type is detected, returns a string with the format.
-        If not, returns None.
-
+        If not, returns ``None``.
     """
 
     if not magic_dict:
@@ -134,17 +161,19 @@ def guess_file_compression(file_path, magic_dict=None):
 
 
 def get_qual_range(qual_str):
-    """ Get range of the Unicode code point for a given string of characters
+    """ Get range of the Unicode encode range for a given string of characters.
+
+    The encoding is determined from the result of the :py:func:`ord` built-in.
 
     Parameters
     ----------
     qual_str : str
-        Arbitrary string
+        Arbitrary string.
 
     Returns
     -------
-    _ : tuple
-        (Minimum Unicode code, Maximum Unicode code)
+    x : tuple
+        (Minimum Unicode code, Maximum Unicode code).
     """
 
     vals = [ord(c) for c in qual_str]
@@ -153,9 +182,9 @@ def get_qual_range(qual_str):
 
 
 def get_encodings_in_range(rmin, rmax):
-    """ Return the valid encodings for a given encoding range.
+    """ Returns the valid encodings for a given encoding range.
 
-    The encoding ranges are stored in the RANGES constant dictionary, with
+    The encoding ranges are stored in the :py:data:`RANGES` dictionary, with
     the encoding name as a string and a list as a value containing the
     phred score and a tuple with the encoding range. For a given encoding
     range provided via the two first arguments, this function will return
@@ -164,16 +193,17 @@ def get_encodings_in_range(rmin, rmax):
     Parameters
     ----------
     rmin : int
-        Minimum Unicode code in range
+        Minimum Unicode code in range.
     rmax : int
-        Maximum Unicode code in range
+        Maximum Unicode code in range.
 
     Returns
     -------
     valid_encodings : list
-        List of all possible encodings for the provided range
+        List of all possible encodings for the provided range.
     valid_phred : list
-        List of all possible phred scores
+        List of all possible phred scores.
+
     """
 
     valid_encodings = []
@@ -188,6 +218,22 @@ def get_encodings_in_range(rmin, rmax):
 
 
 def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
+    """ Main executor of the integrity_coverage template.
+
+    Parameters
+    ----------
+    fastq_id : str
+        Sample Identification string.
+    fastq_pair : list
+        Two element list containing the paired FastQ files.
+    gsize : float or int
+        Estimate of genome size in Mb.
+    minimum_coverage : float or int
+        Minimum coverage required for a sample to pass the coverage check
+    opts : list
+        List of arbitrary options. See `Expected input`_.
+
+    """
 
     # Check for runtime options
     if "-e" in opts:
@@ -265,7 +311,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             if len(encoding) > 1:
                 encoding = set(encoding)
                 phred = set(phred)
-                # Get encodiQng and phred as strings
+                # Get encoding and phred as strings
                 # e.g. enc: Sanger, Illumina-1.8
                 # e.g. phred: 64
                 enc = "{}".format(",".join([x for x in encoding]))
@@ -295,7 +341,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
 
         # This exception is raised when the input FastQ files are corrupted
         except EOFError:
-            for fh in [enc_fh, phred_fh, cov_fh, cov_rep]:
+            for fh in [enc_fh, phred_fh, cov_fh, cov_rep, len_fh]:
                 fh.write("corrupt")
 
 

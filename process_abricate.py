@@ -1,22 +1,31 @@
 #!/usr/bin/env python3
 
 """
-process_abricate template for nextflow
-
 Purpose
 -------
 
-This module is intended parse the results of the Abricate for a given sample
+This module is intended parse the results of the Abricate for one or more
+samples.
 
 Expected input
 --------------
-fastq_id: Pair of FastQ file paths
-    .: 'SampleA'
-abr_file: Path to abricate output file
-    .: 'abr_resfinder.tsv
+
+The following variables are expected whether using NextFlow or the
+:py:func:`main` executor.
+
+- ``fastq_id`` : Sample Identification string.
+    - e.g.: ``'SampleA'``
+- ``abr_file`` : Path to abricate output file.
+    - e.g.: ``'abr_resfinder.tsv'``
 
 Generated output
 ----------------
+
+[Under development]
+
+
+Code documentation
+------------------
 
 """
 
@@ -32,31 +41,49 @@ if __file__.endswith(".command.sh"):
 
 
 class Abricate:
+    """Main parser for Abricate output files.
+
+    This class parses one or more output files from Abricate, usually from
+    different databases. In addition to the parsing methods, it also provides
+    a flexible method to filter and re-format the content of the abricate
+    files.
+
+    Parameters
+    ----------
+    fls : list
+       List of paths to Abricate output files.
+    """
 
     def __init__(self, fls):
-        """Main parser for Abricate file
-
-        Parameters
-        ----------
-        fls : list
-           List of paths to Abricate output files
-        """
 
         self.storage = {}
+        """
+        dic: Main storage of Abricate's file content. Each entry corresponds
+        to a single line and contains the keys::
+        
+            - ``infile``: Input file of Abricate.
+            - ``reference``: Reference of the query sequence.
+            - ``seq_range``: Range of the query sequence in the database sequence.
+            - ``gene``: AMR gene name.
+            - ``accession``: The genomic source of the sequence.
+            - ``database``: The database the sequence came from.
+            - ``coverage``: Proportion of gene covered.
+            - ``identity``: Proportion of exact nucleotide matches.
+        """
 
         self._key = 0
         """
-        Arbitrary key for unique entries in the storage attribute
+        int: Arbitrary key for unique entries in the storage attribute
         """
 
         self.parse_files(fls)
 
     def parse_files(self, fls):
-        """Public method for parsing abricate output files
+        """Public method for parsing abricate output files.
 
-        This method is called at class init for the provided output files.
-        Additional abricate output files can be added using this method after
-        the class instantiation.
+        This method is called at at class instantiation for the provided
+        output files. Additional abricate output files can be added using
+        this method after the class instantiation.
 
         Parameters
         ----------
@@ -73,7 +100,10 @@ class Abricate:
                 logging.warning("File {} does not exist".format(f))
 
     def _parser(self, fl):
-        """Parser for a single abricate output file
+        """Parser for a single abricate output file.
+
+        This parser will scan a single Abricate output file and populate
+        the :py:attr:`Abricate.storage` attribute.
 
         Parameters
         ----------
@@ -82,9 +112,10 @@ class Abricate:
 
         Notes
         -----
-        This method will populate the `storage` attribute with all compliant
-        lines in the abricate output file. Entries are inserted using an
-        arbitrary key that is set by the `_key` attribute.
+        This method will populate the :py:attr:`Abricate.storage` attribute
+        with all compliant lines in the abricate output file. Entries are
+        inserted using an arbitrary key that is set by the
+        :py:attr:`Abricate._key` attribute.
 
         """
 
@@ -134,16 +165,16 @@ class Abricate:
         Parameters
         ----------
         x : int
-            Arbitrary value to compare in the left
+            Arbitrary value to compare in the left.
         op : str
-            Comparison operator
+            Comparison operator.
         y : int
-            Arbitrary value to compare in the rigth
+            Arbitrary value to compare in the right.
 
         Returns
         -------
-        _ : bool
-            The truthness of the test
+        x : bool
+            The 'truthness' of the test.
         """
 
         ops = {
@@ -159,31 +190,32 @@ class Abricate:
 
     def iter_filter(self, filters, databases=None, fields=None,
                     filter_behavior="and"):
-        """General purpose filter iterator
+        """General purpose filter iterator.
 
         This general filter iterator allows the filtering of entries based
         on one or more custom filters. These filters must contain
         an entry of the `storage` attribute, a comparison operator, and the
-        test value. For example, to filter out entries with coverage below 80:
+        test value. For example, to filter out entries with coverage below 80::
 
             my_filter = ["coverage", ">=", 80]
 
-        Filters should always be provide as a list of lists:
+        Filters should always be provide as a list of lists::
 
             iter_filter([["coverage", ">=", 80]])
             # or
             my_filters = [["coverage", ">=", 80],
                           ["identity", ">=", 50]]
+
             iter_filter(my_filters)
 
         As a convenience, a list of the desired databases can be directly
         specified using the `database` argument, which will only report
-        entries for the specified databases:
+        entries for the specified databases::
 
             iter_filter(my_filters, databases=["plasmidfinder"])
 
         By default, this method will yield the complete entry record. However,
-        the returned filters can be specified using the `fields` option.
+        the returned filters can be specified using the `fields` option::
 
             iter_filter(my_filters, fields=["reference", "coverage"])
 
@@ -193,22 +225,23 @@ class Abricate:
             List of lists with the custom filter. Each list should have three
             elements. (1) the key from the entry to be compared; (2) the
             comparison operator; (3) the test value. Example:
-                [["identity", ">", 80]]
+                ``[["identity", ">", 80]]``.
         databases : list
             List of databases that should be reported.
         fields : list
             List of fields from each individual entry that are yielded.
         filter_behavior : str
-            options: 'and' 'or'
+            options: ``'and'`` ``'or'``
             Sets the behaviour of the filters, if multiple filters have been
-            provided. By default it is set to 'and', which means that an
-            entry has to pass all filters. It can be set to 'or', in which
+            provided. By default it is set to ``'and'``, which means that an
+            entry has to pass all filters. It can be set to ``'or'``, in which
             case one one of the filters has to pass.
 
         yields
         ------
         dic : dict
-            Dictionary object containing a `storage` entry that passed filters.
+            Dictionary object containing a :py:attr:`Abricate.storage` entry
+            that passed the filters.
 
         """
 
