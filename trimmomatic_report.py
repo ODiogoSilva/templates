@@ -90,8 +90,11 @@ def parse_log(log_file):
 
         total_len = template["clean_len"] + template["total_trim"]
 
-        template["total_trim_perc"] = round(
-            (template["total_trim"] / total_len) * 100, 2)
+        if total_len:
+            template["total_trim_perc"] = round(
+                (template["total_trim"] / total_len) * 100, 2)
+        else:
+            template["total_trim_perc"] = 0
 
     return template
 
