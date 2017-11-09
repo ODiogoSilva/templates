@@ -114,10 +114,14 @@ def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
         output_names.append("{}_{}_U.fastq.gz".format(FASTQ_ID, str(i + 1)))
     cli += output_names
 
+    if trim_range != ["None"]:
+        cli += [
+            "CROP:{}".format(trim_range[1]),
+            "HEADCROP:{}".format(trim_range[0]),
+        ]
+
     # Add trimmomatic options
     cli += [
-        "CROP:{}".format(trim_range[1]),
-        "HEADCROP:{}".format(trim_range[0]),
         "SLIDINGWINDOW:{}".format(trim_opts[0]),
         "LEADING:{}".format(trim_opts[1]),
         "TRAILING:{}".format(trim_opts[2]),
