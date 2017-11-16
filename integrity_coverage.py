@@ -235,6 +235,8 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
 
     """
 
+    print("This was a triumph")
+
     # Check for runtime options
     if "-e" in opts:
         skip_encoding = True
