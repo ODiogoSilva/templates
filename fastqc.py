@@ -41,7 +41,7 @@ from os.path import exists, join
 
 
 # create logger
-logger = logging.getLogger('simple_example')
+logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)
 # create console handler and set level to debug
 ch = logging.StreamHandler()

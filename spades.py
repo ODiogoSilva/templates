@@ -42,9 +42,25 @@ Code documentation
 """
 
 import os
+import logging
 import subprocess
 
 from subprocess import PIPE
+
+
+# create logger
+logger = logging.getLogger(os.path.basename(__file__))
+logger.setLevel(logging.DEBUG)
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+# add formatter to ch
+ch.setFormatter(formatter)
+# add ch to logger
+logger.addHandler(ch)
+
 
 if __file__.endswith(".command.sh"):
     FASTQ_ID = '$fastq_id'
@@ -52,6 +68,13 @@ if __file__.endswith(".command.sh"):
     MAX_LEN = int('$max_len'.strip())
     KMERS = '$kmers'.strip()
     OPTS = [x.strip() for x in '$opts'.strip("[]").split(",")]
+    logger.debug("Running {} with parameters:".format(
+        os.path.basename(__file__)))
+    logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
+    logger.debug("FASTQ_PAIR: {}".format(FASTQ_PAIR))
+    logger.debug("MAX_LEN: {}".format(MAX_LEN))
+    logger.debug("KMERS: {}".format(KMERS))
+    logger.debug("OPTS: {}".format(OPTS))
 
 
 def set_kmers(kmer_opt, max_read_len):
@@ -72,6 +95,8 @@ def set_kmers(kmer_opt, max_read_len):
 
     """
 
+    logger.debug("Kmer option set to: {}".format(kmer_opt))
+
     # Check if kmer option is set to auto
     if kmer_opt == "auto":
 
@@ -80,14 +105,20 @@ def set_kmers(kmer_opt, max_read_len):
         else:
             kmers = [21, 33, 55, 67, 77]
 
+        logger.debug("Kmer range automatically selected based on max read"
+                     "length of {}: {}".format(max_read_len, kmers))
+
     # Check if manual kmers were specified
     elif len(kmer_opt.split()) > 1:
 
         kmers = kmer_opt.split()
+        logger.debug("Kmer range manually set to: {}".format(kmers))
 
     else:
 
         kmers = []
+        logger.debug("Kmer range set to empty (will be automatically "
+                     "determined by SPAdes")
 
     return kmers
 
@@ -111,9 +142,13 @@ def main(fastq_id, fastq_pair, max_len, kmer, opts):
 
     """
 
+    logging.info("Starting spades")
+
     min_coverage, min_kmer_coverage = opts
 
+    logging.info("Setting SPAdes kmers")
     kmers = set_kmers(kmer, max_len)
+    logging.info("SPAdes kmers set to: {}".format(kmers))
 
     cli = [
         "spades.py",
@@ -139,8 +174,26 @@ def main(fastq_id, fastq_pair, max_len, kmer, opts):
         fastq_pair[1]
     ]
 
+    logger.debug("Running SPAdes subprocess with command: {}".format(cli))
+
     p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
     stdout, stderr = p.communicate()
+
+    # Attempt to decode STDERR output from bytes. If unsuccessful, coerce to
+    # string
+    try:
+        stderr = stderr.decode("utf8")
+        stdout = stdout.decode("utf8")
+    except UnicodeDecodeError:
+        stderr = str(stderr)
+        stdout = str(stdout)
+
+    logger.info("Finished SPAdes subprocess with STDOUT:\\n"
+                "======================================\\n{}".format(stdout))
+    logger.info("Fished SPAdes subprocesswith STDERR:\\n"
+                "======================================\\n{}".format(stderr))
+    logger.info("Finished SPAdes with return code: {}".format(
+        p.returncode))
 
     with open(".status", "w") as fh:
         if p.returncode != 0:
@@ -150,7 +203,20 @@ def main(fastq_id, fastq_pair, max_len, kmer, opts):
             fh.write("pass")
 
     # Change the default contigs.fasta assembly name to a more informative one
-    os.rename("contigs.fasta", "{}_spades.assembly.fasta".format(fastq_id))
+    assembly_file = "{}_spades.assembly.fasta".format(fastq_id)
+    os.rename("contigs.fasta", assembly_file)
+    logger.info("Setting main assembly file to: {}".format(assembly_file))
+
 
 if __name__ == '__main__':
-    main(FASTQ_ID, FASTQ_PAIR, MAX_LEN, KMERS, OPTS)
+
+    import traceback
+
+    with open(".status", "w") as status_fh:
+
+        try:
+            main(FASTQ_ID, FASTQ_PAIR, MAX_LEN, KMERS, OPTS)
+        except Exception as e:
+            status_fh.write("fail")
+            logger.error("Module exited unexpectedly with error: {}".format(
+                traceback.format_exc()))
