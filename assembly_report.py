@@ -30,12 +30,33 @@ Code documentation
 
 """
 
+import os
+import logging
+
 from collections import OrderedDict
+
+
+# create logger
+logger = logging.getLogger(os.path.basename(__file__))
+logger.setLevel(logging.DEBUG)
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+# add formatter to ch
+ch.setFormatter(formatter)
+# add ch to logger
+logger.addHandler(ch)
 
 
 if __file__.endswith(".command.sh"):
     FASTQ_ID = '$fastq_id'
     ASSEMBLY_FILE = '$assembly'
+    logger.debug("Running {} with parameters:".format(
+        os.path.basename(__file__)))
+    logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
+    logger.debug("ASSEMBLY_FILE: {}".format(ASSEMBLY_FILE))
 
 
 class Assembly:
@@ -103,6 +124,8 @@ class Assembly:
         with open(assembly_file) as fh:
 
             header = None
+            logger.debug("Starting iteration of assembly file: {}".format(
+                assembly_file))
 
             for line in fh:
 
@@ -148,6 +171,8 @@ class Assembly:
 
         for contig_id, sequence in self.contigs.items():
 
+            logger.debug("Processing contig: {}".format(contig_id))
+
             # Get contig sequence size
             contig_len = len(sequence)
 
@@ -166,14 +191,17 @@ class Assembly:
             self.summary_info["missing_data"] += sequence.count("N")
 
         # Get average contig size
+        logger.debug("Getting average contig size")
         self.summary_info["avg_contig_size"] = \
             sum(contig_size_list) / len(contig_size_list)
 
         # Get average gc content
+        logger.debug("Getting average GC content")
         self.summary_info["avg_gc"] = \
             sum(self.summary_info["avg_gc"]) / len(self.summary_info["avg_gc"])
 
         # Get N50
+        logger.debug("Getting N50")
         cum_size = 0
         for l in sorted(contig_size_list, reverse=True):
             cum_size += l
@@ -181,6 +209,7 @@ class Assembly:
                 self.summary_info["n50"] = l
                 break
 
+        logger.debug("Writing report to csv")
         # Write summary info to CSV
         with open(output_csv, "w") as fh:
             summary_line = "{}, {}\\n".format(
@@ -201,10 +230,22 @@ def main(fastq_id, assembly_file):
 
     """
 
+    logger.info("Starting assembly report")
     assembly_obj = Assembly(assembly_file, fastq_id)
 
+    logger.info("Retrieving summary statistics for assembly")
     assembly_obj.get_summary_stats("{}_assembly_report.csv".format(fastq_id))
 
 
 if __name__ == '__main__':
-    main(FASTQ_ID, ASSEMBLY_FILE)
+
+    import traceback
+
+    with open(".status", "w") as status_fh:
+
+        try:
+            main(FASTQ_ID, ASSEMBLY_FILE)
+        except Exception as e:
+            status_fh.write("fail")
+            logger.error("Module exited unexpectedly with error: {}".format(
+                traceback.format_exc()))
