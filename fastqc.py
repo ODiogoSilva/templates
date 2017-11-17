@@ -33,16 +33,36 @@ Code documentation
 """
 
 import os
+import logging
 import subprocess
 
 from subprocess import PIPE
 from os.path import exists, join
 
 
+# create logger
+logger = logging.getLogger('simple_example')
+logger.setLevel(logging.DEBUG)
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+# add formatter to ch
+ch.setFormatter(formatter)
+# add ch to logger
+logger.addHandler(ch)
+
+
 if __file__.endswith(".command.sh"):
     FASTQ_PAIR = '$fastq_pair'.split()
     ADAPTER_FILE = eval('$ad')
     CPUS = '$task.cpus'
+    logger.debug("Running {} with parameters:".format(
+        os.path.basename(__file__)))
+    logger.debug("FASTQ_PAIR: {}".format(FASTQ_PAIR))
+    logger.debug("ADAPTER_FILE: {}".format(ADAPTER_FILE))
+    logger.debug("CPUS: {}".format(CPUS))
 
 
 def convert_adatpers(adapter_fasta):
@@ -69,6 +89,7 @@ def convert_adatpers(adapter_fasta):
     """
 
     adapter_out = "fastqc_adapters.tab"
+    logger.debug("Setting output adapters file to: {}".format(adapter_out))
 
     try:
 
@@ -84,10 +105,14 @@ def convert_adatpers(adapter_fasta):
 
                     adap_fh.write("{}\\t{}\\n".format(head, sequence))
 
+        logger.info("Converted adapters file")
+
         return adapter_out
 
     # If an invalid adapters file is provided, return None.
     except FileNotFoundError:
+        logger.warning("Could not find the provided adapters file: {}".format(
+            adapter_fasta))
         return
 
 
@@ -105,10 +130,14 @@ def main(fastq_pair, adapter_file, cpus):
 
     """
 
+    logger.info("Starting fastqc")
+
     # If an adapter file was provided, convert it to FastQC format
     if adapter_file:
+        logger.info("Adapters file provided: {}".format(adapter_file))
         adapters = convert_adatpers(adapter_file)
     else:
+        logger.info("Adapters file not provided")
         adapters = None
 
     # Setting command line for FastQC
@@ -129,23 +158,46 @@ def main(fastq_pair, adapter_file, cpus):
     # Add FastQ files at the end of command line
     cli += fastq_pair
 
+    logger.debug("Running fastqc subprocess with command: {}".format(cli))
+
     p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE, shell=False)
     stdout, stderr = p.communicate()
 
+    # Attempt to decode STDERR output from bytes. If unsuccessful, coerce to
+    # string
+    try:
+        stderr = stderr.decode("utf8")
+    except UnicodeDecodeError:
+        stderr = str(stderr)
+
+    logger.info("Finished fastqc subprocess with STDOUT:\\n"
+                "======================================\\n{}".format(stdout))
+    logger.info("Fished fastqc subprocesswith STDERR:\\n"
+                "======================================\\n{}".format(stderr))
+    logger.info("Finished fastqc with return code: {}".format(
+        p.returncode))
+
+    logger.info("Checking if FastQC output was correctly generated")
     # Check if the FastQC output was correctly generated.
     with open(".status", "w") as fh:
         for fastq in fastq_pair:
             fpath = join(fastq.rsplit(".", 2)[0] + "_fastqc",
                          "fastqc_data.txt")
+            logger.debug("Checking path: {}".format(fpath))
             # If the FastQC output does not exist, pass the STDERR to
             # the output status channel and exit
             if not exists(fpath):
+                logger.warning("Path does not exist: {}".format())
                 fh.write("fail")
                 return
+
+            logger.debug("Found path: {}".format(fpath))
 
         # If the output directories exist, write 'pass' to the output status
         # channel
         fh.write("pass")
+
+    logger.info("Retrieving relevant FastQC output files")
 
     # Both FastQC have been correctly executed. Get the relevant FastQC
     # output files for the output channel
@@ -154,7 +206,9 @@ def main(fastq_pair, adapter_file, cpus):
         fastqc_dir = fastq.rsplit(".", 2)[0] + "_fastqc"
 
         summary_file = join(fastqc_dir, "summary.txt")
+        logger.debug("Retrieving summary file: {}".format(summary_file))
         fastqc_data_file = join(fastqc_dir, "fastqc_data.txt")
+        logger.debug("Retrieving data file: {}".format(fastqc_data_file))
 
         # Rename output files to a file name that is easier to handle in the
         # output channel
