@@ -74,11 +74,27 @@ Code documentation
 
 """
 
+import os
 import bz2
 import gzip
+import logging
 import zipfile
 
 from itertools import chain
+
+# create logger
+logger = logging.getLogger('simple_example')
+logger.setLevel(logging.DEBUG)
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+# add formatter to ch
+ch.setFormatter(formatter)
+# add ch to logger
+logger.addHandler(ch)
+
 
 # Set constants when running from Nextflow
 if __file__.endswith(".command.sh"):
@@ -88,6 +104,14 @@ if __file__.endswith(".command.sh"):
     GSIZE = float('$gsize')
     MINIMUM_COVERAGE = float('$cov')
     OPTS = '$opts'.split()
+
+    logger.debug("Running {} with parameters:".format(
+        os.path.basename(__file__)))
+    logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
+    logger.debug("FASTQ_PAIR: {}".format(FASTQ_PAIR))
+    logger.debug("GSIZE: {}".format(GSIZE))
+    logger.debug("MINIMUM_COVERAGE: {}".format(MINIMUM_COVERAGE))
+    logger.debug("OPTS: {}".format(OPTS))
 
 RANGES = {
     'Sanger': [33, (33, 73)],
@@ -152,6 +176,8 @@ def guess_file_compression(file_path, magic_dict=None):
 
     with open(file_path, "rb") as f:
         file_start = f.read(max_len)
+
+    logger.debug("Binary signature start: {}".format(file_start))
 
     for magic, file_type in magic_dict.items():
         if file_start.startswith(magic):
@@ -235,7 +261,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
 
     """
 
-    print("This was a triumph")
+    logger.info("Starting integrity coverage main")
 
     # Check for runtime options
     if "-e" in opts:
@@ -257,14 +283,24 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
     # Get compression of each FastQ pair file
     file_objects = []
     for fastq in fastq_pair:
+
+        logger.info("Processing file {}".format(fastq))
+
+        logger.info("[{}] Guessing file compression".format(fastq))
         ftype = guess_file_compression(fastq)
 
         # This can guess the compression of gz, bz2 and zip. If it cannot
         # find the compression type, it tries to open a regular file
         if ftype:
+            logger.info("[{}] Found file compression: {}".format(
+                fastq, ftype))
             file_objects.append(COPEN[ftype](fastq, "rt"))
         else:
+            logger.info("[{}] File compression not found. Assuming an "
+                        "uncompressed file".format(fastq))
             file_objects.append(open(fastq))
+
+    logger.info("Starting FastQ file parsing")
 
     # The '*_encoding' file stores a string with the encoding ('Sanger')
     # If no encoding is guessed, 'None' should be stored
@@ -297,6 +333,10 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
                     if lmin < gmin or lmax > gmax:
                         gmin, gmax = min(lmin, gmin), max(lmax, gmax)
                         encoding, phred = get_encodings_in_range(gmin, gmax)
+                        logger.debug(
+                            "Updating estimates at line {} with range {} to"
+                            " '{}' (encoding) and '{}' (phred)".format(
+                                i, [lmin, lmax], encoding, phred))
 
                 # Parse only every 2nd line of the file for the coverage
                 # e.g.: GGATAATCTACCTTGACGATTTGTACTGGCGTTGGTTTCTTA (...)
@@ -306,9 +346,12 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
 
                     # Evaluate maximum read length for sample
                     if read_len > max_read_length:
+                        logger.debug("Updating maximum read length at line "
+                                     "{} to {}".format(i, read_len))
                         max_read_length = read_len
 
             # End of FastQ parsing
+            logger.info("Finished FastQ file parsing")
 
             # Get encoding
             if len(encoding) > 1:
@@ -319,16 +362,23 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
                 # e.g. phred: 64
                 enc = "{}".format(",".join([x for x in encoding]))
                 phred = "{}".format(",".join(str(x) for x in phred))
+                logger.info("Encoding set to {}".format(enc))
+                logger.info("Phred set to {}".format(enc))
 
                 enc_fh.write(enc)
                 phred_fh.write(phred)
             # Encoding not found
             else:
+                logger.warning("Could not guess encoding and phred from "
+                               "FastQ")
                 enc_fh.write("None")
                 phred_fh.write("None")
 
             # Estimate coverage
+            logger.info("Estimating coverage based on a genome size of "
+                        "{}".format(gsize))
             exp_coverage = round(chars / (gsize * 1e6), 2)
+            logger.info("Expected coverage is {}".format(exp_coverage))
             if exp_coverage >= minimum_coverage:
                 cov_rep.write("{},{},{}\\n".format(
                     fastq_id, str(exp_coverage), "PASS"))
@@ -336,6 +386,9 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
                 status_fh.write("pass")
             # Estimated coverage does not pass minimum threshold
             else:
+                logger.warning(
+                    "Expected coverage is lower than the defined "
+                    "minimum threshold: {}".format(minimum_coverage))
                 cov_rep.write("{},{},{}\\n".format(
                     fastq_id, str(exp_coverage), "FAIL"))
                 cov_fh.write("fail")
@@ -346,6 +399,8 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
 
         # This exception is raised when the input FastQ files are corrupted
         except EOFError:
+            logger.warning("The FastQ files could not be correctly "
+                           "parsed. They may be corrupt")
             for fh in [enc_fh, phred_fh, cov_fh, cov_rep, len_fh]:
                 fh.write("corrupt")
                 status_fh.write("fail")
