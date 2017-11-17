@@ -46,9 +46,25 @@ Code documentation
 # TODO: Add option to remove adapters
 # TODO: What to do when there is encoding failure
 
+import os
+import logging
 import subprocess
 
 from subprocess import PIPE
+
+
+# create logger
+logger = logging.getLogger('simple_example')
+logger.setLevel(logging.DEBUG)
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+# add formatter to ch
+ch.setFormatter(formatter)
+# add ch to logger
+logger.addHandler(ch)
 
 
 if __file__.endswith(".command.sh"):
@@ -58,6 +74,13 @@ if __file__.endswith(".command.sh"):
     TRIM_OPTS = [x.strip() for x in '$opts'.strip("[]").split(",")]
     PHRED = '$phred'
 
+    logger.debug("Running {} with parameters:".format(
+        os.path.basename(__file__)))
+    logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
+    logger.debug("FASTQ_PAIR: {}".format(FASTQ_PAIR))
+    logger.debug("TRIM_RANGE: {}".format(TRIM_RANGE))
+    logger.debug("TRIM_OPTS: {}".format(TRIM_OPTS))
+    logger.debug("PHRED: {}".format(PHRED))
 
 TRIM_PATH = "/NGStools/Trimmomatic-0.36/trimmomatic.jar"
 
@@ -81,6 +104,8 @@ def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
         output from :py:class:`templates.integrity_coverage`.
 
     """
+
+    logger.info("Starting trimmomatic")
 
     # Create base CLI
     cli = [
@@ -131,18 +156,43 @@ def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
         "{}_trimlog.txt".format(fastq_id)
     ]
 
+    logger.debug("Running trimmomatic subprocess with command: {}".format(cli))
+
     p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
     stdout, stderr = p.communicate()
 
+    # Attempt to decode STDERR output from bytes. If unsuccessful, coerce to
+    # string
+    try:
+        stderr = stderr.decode("utf8")
+    except UnicodeDecodeError:
+        stderr = str(stderr)
+
+    logger.info("Finished trimmomatic subprocess with STDOUT:\\n"
+                "======================================\\n{}".format(stdout))
+    logger.info("Fished trimmomatic subprocesswith STDERR:\\n"
+                "======================================\\n{}".format(stderr))
+    logger.info("Finished trimmomatic with return code: {}".format(
+        p.returncode))
+
     # Check if trimmomatic ran successfully. If not, write the error message
     # to the status channel and exit.
-    with open(".status", "w") as fh:
-        if p.returncode != 0:
-            fh.write("fail")
-            return
-        else:
-            fh.write("pass")
+    if p.returncode != 0:
+        status_fh.write("fail")
+        return
+    else:
+        status_fh.write("pass")
 
 
 if __name__ == '__main__':
-    main(FASTQ_ID, FASTQ_PAIR, TRIM_RANGE, TRIM_OPTS, PHRED)
+
+    import traceback
+
+    with open(".status", "w") as status_fh:
+
+        try:
+            main(FASTQ_ID, FASTQ_PAIR, TRIM_RANGE, TRIM_OPTS, PHRED)
+        except Exception as e:
+            status_fh.write("fail")
+            logger.error("Module exited unexpectedly with error: {}".format(
+                traceback.format_exc()))
