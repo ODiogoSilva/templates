@@ -40,8 +40,23 @@ Code documentation
 
 """
 
-
+import os
+import logging
 import operator
+
+
+# create logger
+logger = logging.getLogger(os.path.basename(__file__))
+logger.setLevel(logging.DEBUG)
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+# add formatter to ch
+ch.setFormatter(formatter)
+# add ch to logger
+logger.addHandler(ch)
 
 
 if __file__.endswith(".command.sh"):
@@ -49,6 +64,11 @@ if __file__.endswith(".command.sh"):
     ASSEMBLY_FILE = '$assembly'
     GSIZE = float('$gsize')
     OPTS = [x.strip() for x in '$opts'.strip("[]").split(",")]
+    logger.debug("Running {} with parameters:".format(
+        os.path.basename(__file__)))
+    logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
+    logger.debug("GSIZE: {}".format(GSIZE))
+    logger.debug("OPTS: {}".format(OPTS))
 
 
 class Assembly:
@@ -143,6 +163,8 @@ class Assembly:
 
         with open(assembly_file) as fh:
 
+            logger.debug("Starting iteration of assembly file: {}".format(
+                assembly_file))
             for line in fh:
                 # Skip empty lines
                 if not line.strip():
@@ -160,6 +182,9 @@ class Assembly:
                         # than successively concatenating strings.
                         seq = "".join(seq_temp)
 
+                        logger.debug("Populating contig with contig_id '{}', "
+                                     "header '{}' and cov '{}'".format(
+                                        contig_id, header, cov))
                         self._populate_contigs(contig_id, header, cov, seq)
 
                         # Reset temporary sequence storage
@@ -173,6 +198,9 @@ class Assembly:
                     seq_temp.append(line)
 
             # Populate last contig entry
+            logger.debug("Populating contig with contig_id '{}', "
+                         "header '{}' and cov '{}'".format(
+                            contig_id, header, cov))
             seq = "".join(seq_temp)
             self._populate_contigs(contig_id, header, cov, seq)
 
@@ -202,6 +230,7 @@ class Assembly:
         # information on the GC/AT/N counts and proportions. This makes it
         # much easier to add to the contigs attribute using the ** notation.
         gc_kwargs = self._get_gc_content(sequence, len(sequence))
+        logger.debug("Populate GC content with: {}".format(gc_kwargs))
 
         self.contigs[contig_id] = {
             "header": header,
@@ -310,6 +339,9 @@ class Assembly:
 
         self.filters = list(comparisons) + gc_filters
 
+        logger.debug("Filtering contigs using filters: {}".format(
+            self.filters))
+
         for contig_id, contig in self.contigs.items():
             for key, op, value in list(comparisons) + gc_filters:
                 if not self._test_truth(contig[key], op, value):
@@ -349,6 +381,8 @@ class Assembly:
             If ``True``, does not include filtered ids.
         """
 
+        logger.debug("Writing the filtered assembly into: {}".format(
+            output_file))
         with open(output_file, "w") as fh:
 
             for contig_id, contig in self.contigs.items():
@@ -367,6 +401,8 @@ class Assembly:
 
         """
 
+        logger.debug("Writing the assembly report into: {}".format(
+            output_file))
         with open(output_file, "w") as fh:
 
             for contig_id, vals in self.report.items():
@@ -389,34 +425,45 @@ def main(fastq_id, assembly_file, gsize, opts):
 
     """
 
-    try:
-        min_contig_len, min_kmer_cov = [int(x) for x in opts]
+    logger.info("Starting SPAdes processing")
 
-        # Parse the spades assembly file and perform the first filtering.
-        spades_assembly = Assembly(assembly_file, min_contig_len, min_kmer_cov,
-                                   fastq_id)
+    min_contig_len, min_kmer_cov = [int(x) for x in opts]
+    logger.debug("Setting minimum conting length to: {}".format(
+        min_contig_len))
+    logger.debug("Setting minimum kmer coverage: {}".format(min_kmer_cov))
 
-        # Check if assembly size of the first assembly is lower than 80% of the
-        # estimated genome size. If True, perform the filtering without the
-        # k-mer coverage filter
-        if spades_assembly.get_assembly_length() < gsize * 1000000 * 0.8:
-            spades_assembly.filter_contigs(*[
-                ["length", ">=", min_contig_len]
-            ])
+    # Parse the spades assembly file and perform the first filtering.
+    logger.info("Starting assembly parsing")
+    spades_assembly = Assembly(assembly_file, min_contig_len, min_kmer_cov,
+                               fastq_id)
 
-        # Write filtered assembly
-        output_assembly = "{}.assembly.fasta".format(fastq_id)
-        spades_assembly.write_assembly(output_assembly)
-        # Write report
-        output_report = "{}.report.csv".format(fastq_id)
-        spades_assembly.write_report(output_report)
+    # Check if assembly size of the first assembly is lower than 80% of the
+    # estimated genome size. If True, perform the filtering without the
+    # k-mer coverage filter
+    if spades_assembly.get_assembly_length() < gsize * 1000000 * 0.8:
+        spades_assembly.filter_contigs(*[
+            ["length", ">=", min_contig_len]
+        ])
 
-        with open(".status", "w") as fh:
-            fh.write("pass")
-    except:
-        with open(".status", "w") as fh:
-            fh.write("fail")
+    # Write filtered assembly
+    output_assembly = "{}.assembly.fasta".format(fastq_id)
+    spades_assembly.write_assembly(output_assembly)
+    # Write report
+    output_report = "{}.report.csv".format(fastq_id)
+    spades_assembly.write_report(output_report)
+
+    status_fh.write("pass")
 
 
 if __name__ == '__main__':
-    main(FASTQ_ID, ASSEMBLY_FILE, GSIZE, OPTS)
+
+    import traceback
+
+    with open(".status", "w") as status_fh:
+
+        try:
+            main(FASTQ_ID, ASSEMBLY_FILE, GSIZE, OPTS)
+        except Exception as e:
+            status_fh.write("fail")
+            logger.error("Module exited unexpectedly with error: {}".format(
+                traceback.format_exc()))
