@@ -50,8 +50,23 @@ Code documentation
 """
 
 import os
+import logging
 
 from collections import OrderedDict
+
+
+# create logger
+logger = logging.getLogger('simple_example')
+logger.setLevel(logging.DEBUG)
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+# add formatter to ch
+ch.setFormatter(formatter)
+# add ch to logger
+logger.addHandler(ch)
 
 
 if __file__.endswith(".command.sh"):
@@ -59,6 +74,12 @@ if __file__.endswith(".command.sh"):
     RESULT_P2 = '$result_p2'.split()
     FASTQ_ID = '$fastq_id'
     OPTS = '$opts'.split()
+    logger.debug("Running {} with parameters:".format(
+        os.path.basename(__file__)))
+    logger.debug("RESULT_P1: {}".format(RESULT_P1))
+    logger.debug("RESULT_P2: {}".format(RESULT_P2))
+    logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
+    logger.debug("OPTS: {}".format(OPTS))
 
 
 def get_trim_index(biased_list):
@@ -130,11 +151,14 @@ def trim_range(data_file):
         List containing the range with the best trimming positions for the
         corresponding FastQ file. The first element is the 5' end trim index
         and the second element is the 3' end trim index.
-
     """
+
+    logger.debug("Starting trim range assessment")
 
     # Target string for nucleotide bias assessment
     target_nuc_bias = ">>Per base sequence content"
+    logger.debug("Target string to start nucleotide bias assessment set to "
+                 "{}".format(target_nuc_bias))
     # This flag will become True when gathering base proportion data
     # from file.
     gather = False
@@ -150,10 +174,12 @@ def trim_range(data_file):
             # Start assessment of nucleotide bias
             if line.startswith(target_nuc_bias):
                 # Skip comment line
+                logger.debug("Found target string at line: {}".format(line))
                 next(fh)
                 gather = True
             # Stop assessment when reaching end of target module
             elif line.startswith(">>END_MODULE") and gather:
+                logger.debug("Stopping parsing at line: {}".format(line))
                 break
             elif gather:
                 # Get proportions of each nucleotide
@@ -167,15 +193,20 @@ def trim_range(data_file):
                 else:
                     biased.append(True)
 
+    logger.debug("Finished bias assessment with result: {}".format(biased))
+
     # Split biased list in half to get the 5' and 3' ends
     biased_5end, biased_3end = biased[:int(len(biased))],\
         biased[int(len(biased)):][::-1]
 
+    logger.debug("Getting optimal trim range from biased list")
     trim_nt = [0, 0]
     # Assess number of nucleotides to clip at 5' end
     trim_nt[0] = get_trim_index(biased_5end)
+    logger.debug("Optimal trim range at 5' end set to: {}".format(trim_nt[0]))
     # Assess number of nucleotides to clip at 3' end
     trim_nt[1] = len(biased) - get_trim_index(biased_3end)
+    logger.debug("Optimal trim range at 3' end set to: {}".format(trim_nt[1]))
 
     return trim_nt
 
@@ -247,6 +278,8 @@ def get_summary(summary_file):
     """
 
     summary_info = OrderedDict()
+    logger.debug("Retrieving summary information from file: {}".format(
+        summary_file))
 
     with open(summary_file) as fh:
         for line in fh:
@@ -256,6 +289,9 @@ def get_summary(summary_file):
             # Populate summary info
             fields = [x.strip() for x in line.split("\t")]
             summary_info[fields[1]] = fields[0]
+
+    logger.debug("Retrieved summary information from file: {}".format(
+        summary_info))
 
     return summary_info
 
@@ -306,6 +342,7 @@ def check_summary_health(summary_file):
         "Sequence Length Distribution",
         "Per sequence GC content"
     ]
+    logger.debug("Fail sensitive categories: {}".format(fail_sensitive))
 
     # Store summary categories that must pass. If they do not, do not proceed
     # with that sample
@@ -313,6 +350,7 @@ def check_summary_health(summary_file):
         "Per base N content",
         "Adapter Content"
     ]
+    logger.debug("Must pass categories: {}".format(must_pass))
 
     # Get summary dictionary
     summary_info = get_summary(summary_file)
@@ -324,15 +362,21 @@ def check_summary_health(summary_file):
 
     for cat, test in summary_info.items():
 
+        logger.debug("Assessing category {} with result {}".format(cat, test))
+
         # Check for fail sensitive
         if cat in fail_sensitive and test == "FAIL":
             health = False
             failed.append("{}:{}".format(cat, test))
+            logger.warning("Category {} failed a fail sensitive "
+                           "category".format(cat))
 
         # Check for must pass
         if cat in must_pass and test != "PASS":
             health = False
             failed.append("{}:{}".format(cat, test))
+            logger.warning("Category {} failed a must pass category".format(
+                cat))
 
     # Passed all tests
     return health, failed
@@ -367,8 +411,9 @@ def main(fastq_id, result_p1, result_p2, opts):
 
     """
 
-    with open(".status", "w") as status_fh, \
-            open("{}_trim_report".format(fastq_id), "w") as trep_fh, \
+    logger.info("Starting fastqc report")
+
+    with open("{}_trim_report".format(fastq_id), "w") as trep_fh, \
             open("optimal_trim", "w") as trim_fh, \
             open("{}_status_report".format(fastq_id), "w") as rep_fh:
 
@@ -377,20 +422,27 @@ def main(fastq_id, result_p1, result_p2, opts):
         # to the 'fastqc_health' channel. If at least one fails, send the
         # summary report.
         if "--ignore-tests" not in opts:
+            logger.info("Performing FastQ health check")
             for p, fastqc_summary in enumerate([result_p1[1], result_p2[1]]):
 
+                logger.debug("Checking files: {}".format(fastqc_summary))
                 # Get the boolean health variable and a list of failed
                 # categories, if any
                 health, f_cat = check_summary_health(fastqc_summary)
+                logger.debug("Health checked: {}".format(health))
+                logger.debug("Failed categories: {}".format(f_cat))
 
                 # Rename category summary file to the channel that will publish
                 # The results
                 output_file = "{}_{}_summary.txt".format(fastq_id, p)
                 os.rename(fastqc_summary, output_file)
+                logger.debug("Setting summary file name to {}".format(
+                    output_file))
 
                 # If one of the health flags returns False, send the summary
                 # report through the status channel
                 if not health:
+                    logger.warning("Sample failed quality control checks")
                     status_fh.write("fail")
                     trim_fh.write("fail")
                     rep_fh.write("{}, {}\\n".format(fastq_id, ",".join(f_cat)))
@@ -398,12 +450,16 @@ def main(fastq_id, result_p1, result_p2, opts):
 
                     return
 
+            logger.info("Sample passed quality control checks")
+
         status_fh.write("pass")
         rep_fh.write("{}, pass\\n".format(fastq_id))
 
+        logger.info("Assessing optimal trim range for sample")
         # Get optimal trimming range for sample, based on the per base sequence
         # content
         optimal_trim = get_sample_trim(result_p1[0], result_p2[0])
+        logger.info("Optimal trim range set to: {}".format(optimal_trim))
         trim_fh.write("{}".format(" ".join([str(x) for x in optimal_trim])))
 
         trep_fh.write("{},{},{}\\n".format(fastq_id, optimal_trim[0],
@@ -411,4 +467,14 @@ def main(fastq_id, result_p1, result_p2, opts):
 
 
 if __name__ == '__main__':
-    main(FASTQ_ID, RESULT_P1, RESULT_P2, OPTS)
+
+    import traceback
+
+    with open(".status", "w") as status_fh:
+
+        try:
+            main(FASTQ_ID, RESULT_P1, RESULT_P2, OPTS)
+        except Exception as e:
+            status_fh.write("fail")
+            logger.error("Module exited unexpectedly with error: {}".format(
+                traceback.format_exc()))
