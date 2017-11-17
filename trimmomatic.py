@@ -165,7 +165,7 @@ def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
     # string
     try:
         stderr = stderr.decode("utf8")
-    except UnicodeDecodeError:
+    except (UnicodeDecodeError, AttributeError):
         stderr = str(stderr)
 
     logger.info("Finished trimmomatic subprocess with STDOUT:\\n"

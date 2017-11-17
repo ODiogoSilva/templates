@@ -43,12 +43,28 @@ Code documentation
 
 """
 
+import os
 import re
 import shutil
+import logging
 import subprocess
 
 from subprocess import PIPE
 from collections import OrderedDict
+
+
+# create logger
+logger = logging.getLogger(os.path.basename(__file__))
+logger.setLevel(logging.DEBUG)
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+# add formatter to ch
+ch.setFormatter(formatter)
+# add ch to logger
+logger.addHandler(ch)
 
 
 if __file__.endswith(".command.sh"):
@@ -58,6 +74,14 @@ if __file__.endswith(".command.sh"):
     BAM_FILE = '$bam_file'
     MIN_ASSEMBLY_COVERAGE = '$min_assembly_coverage'
     GSIZE = float('$gsize')
+    logger.debug("Running {} with parameters:".format(
+        os.path.basename(__file__)))
+    logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
+    logger.debug("ASSEMBLY_FILE: {}".format(ASSEMBLY_FILE))
+    logger.debug("COVERAGE_FILE: {}".format(COVERAGE_FILE))
+    logger.debug("BAM_FILE: {}".format(BAM_FILE))
+    logger.debug("MIN_ASSEMBLY_COVERAGE: {}".format(MIN_ASSEMBLY_COVERAGE))
+    logger.debug("GSIZE: {}".format(GSIZE))
 
 
 def parse_coverage_table(coverage_file):
@@ -104,6 +128,8 @@ def parse_coverage_table(coverage_file):
             total_cov += int(cov)
             # Add total size
             total_size += contig_len
+            logger.debug("Processing contig '{}' with coverage '{}' and "
+                         "length of '{}'".format(contig, cov, contig_len))
 
     return coverage_dict, total_size, total_cov
 
@@ -192,8 +218,27 @@ def filter_bam(coverage_info, bam_file, min_coverage, output_bam):
 
     cli += contig_list
 
+    logger.debug("Runnig samtools view subprocess with command: {}".format(
+        cli))
+
     p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
     stdout, stderr = p.communicate()
+
+    # Attempt to decode STDERR output from bytes. If unsuccessful, coerce to
+    # string
+    try:
+        stderr = stderr.decode("utf8")
+        stdout = stdout.decode("utf8")
+    except (UnicodeDecodeError, AttributeError):
+        stderr = str(stderr)
+        stdout = str(stdout)
+
+    logger.info("Finished samtools view subprocess with STDOUT:\\n"
+                "======================================\\n{}".format(stdout))
+    logger.info("Fished samtools view subprocesswith STDERR:\\n"
+                "======================================\\n{}".format(stderr))
+    logger.info("Finished samtools view with return code: {}".format(
+        p.returncode))
 
     if not p.returncode:
         # Create index
@@ -203,8 +248,27 @@ def filter_bam(coverage_info, bam_file, min_coverage, output_bam):
             output_bam
         ]
 
+        logger.debug("Runnig samtools index subprocess with command: "
+                     "{}".format(cli))
+
         p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
+
+        try:
+            stderr = stderr.decode("utf8")
+            stdout = stdout.decode("utf8")
+        except (UnicodeDecodeError, AttributeError):
+            stderr = str(stderr)
+            stdout = str(stdout)
+
+        logger.info("Finished samtools index subprocess with STDOUT:\\n"
+                    "======================================\\n{}".format(
+            stdout))
+        logger.info("Fished samtools index subprocesswith STDERR:\\n"
+                    "======================================\\n{}".format(
+            stderr))
+        logger.info("Finished samtools index with return code: {}".format(
+            p.returncode))
 
 
 def check_filtered_assembly(coverage_info, minimum_coverage, genome_size):
@@ -234,10 +298,13 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size):
     # Get size of assembly after filtering contigs below minimum_coverage
     assembly_size = sum([x["len"] for x in coverage_info.values()
                          if x["cov"] >= minimum_coverage])
+    logger.debug("Assembly size after filtering is: {}".format(assembly_size))
 
     # If the filtered assembly size falls below the 80% genome size threshold,
     # fail this check and return False
     if assembly_size < genome_size * 1e6 * 0.8:
+        logger.warning("Filtered assembly size is below minimum allowed size"
+                       " of 80% genome size")
         return False
     else:
         return True
@@ -264,48 +331,67 @@ def main(fastq_id, assembly_file, coverage_file, bam_file,
 
     """
 
-    try:
-        # Get coverage info, total size and total coverage from the assembly
-        coverage_info, a_size, a_cov = parse_coverage_table(coverage_file)
+    logger.info("Starting assembly mapping processing")
 
-        # Assess the minimum assembly coverage
-        if min_assembly_coverage == "auto":
-            # Get the 1/3 value of the current assembly coverage
-            min_coverage = (a_cov / a_size) * .3
-            # If the 1/3 coverage is lower than 10, change it to the minimum of
-            # 10
-            if min_coverage < 10:
-                min_coverage = 10
-        else:
-            min_coverage = int(min_assembly_coverage)
+    # Get coverage info, total size and total coverage from the assembly
+    logger.info("Parsing coverage table")
+    coverage_info, a_size, a_cov = parse_coverage_table(coverage_file)
+    logger.info("Assembly processed with a total size of '{}' and coverage"
+                " of '{}'".format(a_size, a_cov))
 
-        # Check if filtering the assembly using the provided min_coverage will
-        # reduce the final bp number to less than 80% of the estimated genome
-        # size.
-        # If the check below passes with True, then the filtered assembly
-        # is above the 80% genome size threshold.
-        filtered_assembly = "{}_filtered.assembly.fasta".format(fastq_id)
-        filtered_bam = "filtered.bam"
-        if check_filtered_assembly(coverage_info, min_coverage, gsize):
-            # Filter assembly contigs based on the minimum coverage.
-            filter_assembly(assembly_file, min_coverage, coverage_info,
-                            filtered_assembly)
-            filter_bam(coverage_info, bam_file, min_coverage, filtered_bam)
-        # Could not filter the assembly as it would drop below acceptable
-        # length levels. Copy the original assembly to the output assembly file
-        # for compliance with the output channel
-        else:
-            shutil.copy(assembly_file, filtered_assembly)
-            shutil.copy(bam_file, filtered_bam)
+    # Assess the minimum assembly coverage
+    if min_assembly_coverage == "auto":
+        # Get the 1/3 value of the current assembly coverage
+        min_coverage = (a_cov / a_size) * .3
+        logger.info("Minimum assembly coverage automatically set to: "
+                    "{}".format(min_coverage))
+        # If the 1/3 coverage is lower than 10, change it to the minimum of
+        # 10
+        if min_coverage < 10:
+            logger.info("Minimum assembly coverage cannot be set to lower"
+                        " that 10. Setting to 10")
+            min_coverage = 10
+    else:
+        min_coverage = int(min_assembly_coverage)
+        logger.info("Minimum assembly coverage manually set to: {}".format(
+            min_coverage))
 
-        with open(".status", "w") as fh:
-            fh.write("pass")
+    # Check if filtering the assembly using the provided min_coverage will
+    # reduce the final bp number to less than 80% of the estimated genome
+    # size.4
+    # If the check below passes with True, then the filtered assembly
+    # is above the 80% genome size threshold.
+    filtered_assembly = "{}_filtered.assembly.fasta".format(fastq_id)
+    filtered_bam = "filtered.bam"
+    logger.info("Checking filtered assembly")
+    if check_filtered_assembly(coverage_info, min_coverage, gsize):
+        # Filter assembly contigs based on the minimum coverage.
+        logger.info("Filtered assembly passed minimum size threshold")
+        logger.info("Writting filtered assembly")
+        filter_assembly(assembly_file, min_coverage, coverage_info,
+                        filtered_assembly)
+        logger.info("Filtering BAM file according to saved contigs")
+        filter_bam(coverage_info, bam_file, min_coverage, filtered_bam)
+    # Could not filter the assembly as it would drop below acceptable
+    # length levels. Copy the original assembly to the output assembly file
+    # for compliance with the output channel
+    else:
+        shutil.copy(assembly_file, filtered_assembly)
+        shutil.copy(bam_file, filtered_bam)
 
-    except:
-        with open(".status", "w") as fh:
-            fh.write("fail")
+    status_fh.write("pass")
 
 
 if __name__ == '__main__':
-    main(FASTQ_ID, ASSEMBLY_FILE, COVERAGE_FILE, BAM_FILE,
-         MIN_ASSEMBLY_COVERAGE, GSIZE)
+
+    import traceback
+
+    with open(".status", "w") as status_fh:
+
+        try:
+            main(FASTQ_ID, ASSEMBLY_FILE, COVERAGE_FILE, BAM_FILE,
+                 MIN_ASSEMBLY_COVERAGE, GSIZE)
+        except Exception as e:
+            status_fh.write("fail")
+            logger.error("Module exited unexpectedly with error: {}".format(
+                traceback.format_exc()))

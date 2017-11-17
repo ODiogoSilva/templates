@@ -184,7 +184,7 @@ def main(fastq_id, fastq_pair, max_len, kmer, opts):
     try:
         stderr = stderr.decode("utf8")
         stdout = stdout.decode("utf8")
-    except UnicodeDecodeError:
+    except (UnicodeDecodeError, AttributeError):
         stderr = str(stderr)
         stdout = str(stdout)
 

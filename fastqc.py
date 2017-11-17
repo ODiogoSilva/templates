@@ -167,7 +167,7 @@ def main(fastq_pair, adapter_file, cpus):
     # string
     try:
         stderr = stderr.decode("utf8")
-    except UnicodeDecodeError:
+    except (UnicodeDecodeError, AttributeError):
         stderr = str(stderr)
 
     logger.info("Finished fastqc subprocess with STDOUT:\\n"
