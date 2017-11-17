@@ -313,8 +313,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             open("{}_phred".format(fastq_id), "w") as phred_fh, \
             open("{}_coverage".format(fastq_id), "w") as cov_fh, \
             open("{}_report".format(fastq_id), "w") as cov_rep, \
-            open("{}_max_len".format(fastq_id), "w") as len_fh, \
-            open(".status", "w") as status_fh:
+            open("{}_max_len".format(fastq_id), "w") as len_fh:
 
         try:
             # Iterate over both pair files sequentially using itertools.chain
@@ -408,4 +407,13 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
 
 if __name__ == "__main__":
 
-    main(FASTQ_ID, FASTQ_PAIR, GSIZE, MINIMUM_COVERAGE, OPTS)
+    import traceback
+
+    with open(".status", "w") as status_fh:
+
+        try:
+            main(FASTQ_ID, FASTQ_PAIR, GSIZE, MINIMUM_COVERAGE, OPTS)
+        except Exception as e:
+            status_fh.write("fail")
+            logger.error("Module exited unexpectedly with error: {}".format(
+                traceback.format_exc()))
