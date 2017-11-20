@@ -27,12 +27,38 @@ Code documentation
 
 """
 
+import os
+import logging
 
 from collections import OrderedDict
 
+# create logger
+logger = logging.getLogger(os.path.basename(__file__))
+logger.setLevel(logging.DEBUG)
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+# add formatter to ch
+ch.setFormatter(formatter)
+# add ch to logger
+logger.addHandler(ch)
 
 if __file__.endswith(".command.sh"):
     LOG_FILES = '$log_files'.split()
+
+
+def _log_error():
+    """Nextflow specific function that logs an error upon unexpected failing
+    """
+
+    import traceback
+
+    with open(".status", "w") as status_fh:
+        logger.error("Module exited unexpectedly with error:\\n{}".format(
+            traceback.format_exc()))
+        status_fh.write("error")
 
 
 def parse_log(log_file):
@@ -144,4 +170,8 @@ def main(log_files):
 
 
 if __name__ == '__main__':
-    main(LOG_FILES)
+
+    try:
+        main(LOG_FILES)
+    except:
+        _log_error()
