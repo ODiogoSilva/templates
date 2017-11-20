@@ -85,6 +85,18 @@ if __file__.endswith(".command.sh"):
 TRIM_PATH = "/NGStools/Trimmomatic-0.36/trimmomatic.jar"
 
 
+def _log_error():
+    """Nextflow specific function that logs an error upon unexpected failing
+    """
+
+    import traceback
+
+    with open(".status", "w") as status_fh:
+        logger.error("Module exited unexpectedly with error:\\n{}".format(
+            traceback.format_exc()))
+        status_fh.write("error")
+
+
 def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
     """ Main executor of the trimmomatic template.
 
@@ -177,22 +189,17 @@ def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
 
     # Check if trimmomatic ran successfully. If not, write the error message
     # to the status channel and exit.
-    if p.returncode != 0:
-        status_fh.write("fail")
-        return
-    else:
-        status_fh.write("pass")
+    with open(".status", "w") as status_fh:
+        if p.returncode != 0:
+            status_fh.write("fail")
+            return
+        else:
+            status_fh.write("pass")
 
 
 if __name__ == '__main__':
 
-    import traceback
-
-    with open(".status", "w") as status_fh:
-
-        try:
-            main(FASTQ_ID, FASTQ_PAIR, TRIM_RANGE, TRIM_OPTS, PHRED)
-        except Exception as e:
-            status_fh.write("fail")
-            logger.error("Module exited unexpectedly with error: {}".format(
-                traceback.format_exc()))
+    try:
+        main(FASTQ_ID, FASTQ_PAIR, TRIM_RANGE, TRIM_OPTS, PHRED)
+    except Exception:
+        _log_error()
