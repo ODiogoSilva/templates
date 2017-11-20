@@ -143,6 +143,18 @@ dict: Dictionary containing the binary signatures for three compression formats
 """
 
 
+def _log_error():
+    """Nextflow specific function that logs an error upon unexpected failing
+    """
+
+    import traceback
+
+    with open(".status", "w") as status_fh:
+        logger.error("Module exited unexpectedly with error:\\n{}".format(
+            traceback.format_exc()))
+        status_fh.write("error")
+
+
 def guess_file_compression(file_path, magic_dict=None):
     """Guesses the compression of an input file.
 
@@ -313,7 +325,8 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             open("{}_phred".format(fastq_id), "w") as phred_fh, \
             open("{}_coverage".format(fastq_id), "w") as cov_fh, \
             open("{}_report".format(fastq_id), "w") as cov_rep, \
-            open("{}_max_len".format(fastq_id), "w") as len_fh:
+            open("{}_max_len".format(fastq_id), "w") as len_fh, \
+            open(".status", "w") as status_fh:
 
         try:
             # Iterate over both pair files sequentially using itertools.chain
@@ -385,7 +398,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
                 status_fh.write("pass")
             # Estimated coverage does not pass minimum threshold
             else:
-                logger.warning(
+                logger.error(
                     "Expected coverage is lower than the defined "
                     "minimum threshold: {}".format(minimum_coverage))
                 cov_rep.write("{},{},{}\\n".format(
@@ -398,8 +411,8 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
 
         # This exception is raised when the input FastQ files are corrupted
         except EOFError:
-            logger.warning("The FastQ files could not be correctly "
-                           "parsed. They may be corrupt")
+            logger.error("The FastQ files could not be correctly "
+                         "parsed. They may be corrupt")
             for fh in [enc_fh, phred_fh, cov_fh, cov_rep, len_fh]:
                 fh.write("corrupt")
                 status_fh.write("fail")
@@ -407,13 +420,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
 
 if __name__ == "__main__":
 
-    import traceback
-
-    with open(".status", "w") as status_fh:
-
-        try:
-            main(FASTQ_ID, FASTQ_PAIR, GSIZE, MINIMUM_COVERAGE, OPTS)
-        except Exception as e:
-            status_fh.write("fail")
-            logger.error("Module exited unexpectedly with error: {}".format(
-                traceback.format_exc()))
+    try:
+        main(FASTQ_ID, FASTQ_PAIR, GSIZE, MINIMUM_COVERAGE, OPTS)
+    except Exception:
+        _log_error()
