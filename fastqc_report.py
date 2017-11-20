@@ -82,6 +82,16 @@ if __file__.endswith(".command.sh"):
     logger.debug("OPTS: {}".format(OPTS))
 
 
+def _log_error():
+
+    import traceback
+
+    with open(".status", "w") as status_fh:
+        logger.error("Module exited unexpectedly with error:\\n{}".format(
+            traceback.format_exc()))
+        status_fh.write("error")
+
+
 def get_trim_index(biased_list):
     """Returns the trim index from a ``bool`` list
 
@@ -296,7 +306,7 @@ def get_summary(summary_file):
     return summary_info
 
 
-def check_summary_health(summary_file):
+def check_summary_health(summary_file, **kwargs):
     """Checks the health of a sample from the FastQC summary file.
 
     Parses the FastQC summary file and tests whether the sample is good
@@ -336,21 +346,31 @@ def check_summary_health(summary_file):
 
     # Store the summary categories that cannot fail. If they fail, do not
     # proceed with this sample
-    fail_sensitive = [
+    fail_sensitive = kwargs.get("fail_sensitive", [
         "Per base sequence quality",
         "Overrepresented sequences",
         "Sequence Length Distribution",
         "Per sequence GC content"
-    ]
+    ])
     logger.debug("Fail sensitive categories: {}".format(fail_sensitive))
 
     # Store summary categories that must pass. If they do not, do not proceed
     # with that sample
-    must_pass = [
+    must_pass = kwargs.get("must_pass", [
         "Per base N content",
         "Adapter Content"
-    ]
+    ])
     logger.debug("Must pass categories: {}".format(must_pass))
+
+    warning_fail_sensitive = kwargs.get("warning_fail_sensitive", [
+        "Per base sequence quality",
+        "Overrepresented sequences",
+
+    ])
+
+    warning_must_pass = kwargs.get("warning_must_pass", [
+        "Per base sequence content"
+    ])
 
     # Get summary dictionary
     summary_info = get_summary(summary_file)
@@ -359,27 +379,42 @@ def check_summary_health(summary_file):
     health = True
     # List of failing categories
     failed = []
+    # List of warning categories
+    warning = []
 
     for cat, test in summary_info.items():
 
         logger.debug("Assessing category {} with result {}".format(cat, test))
 
+        # FAILURES
         # Check for fail sensitive
         if cat in fail_sensitive and test == "FAIL":
             health = False
             failed.append("{}:{}".format(cat, test))
-            logger.warning("Category {} failed a fail sensitive "
+            logger.error("Category {} failed a fail sensitive "
                            "category".format(cat))
 
         # Check for must pass
         if cat in must_pass and test != "PASS":
             health = False
             failed.append("{}:{}".format(cat, test))
-            logger.warning("Category {} failed a must pass category".format(
+            logger.error("Category {} failed a must pass category".format(
                 cat))
 
+        # WARNINGS
+        # Check for fail sensitive
+        if cat in warning_fail_sensitive and test == "FAIL":
+            warning.append("{}:{}".format(cat, test))
+            logger.warning("Category {} flagged at a fail sensitive "
+                           "category".format(cat))
+
+        if cat in warning_must_pass and test != "PASS":
+            warning.append("{}:{}".format(cat, test))
+            logger.warning("Category {} flagged at a must pass "
+                           "category".format(cat))
+
     # Passed all tests
-    return health, failed
+    return health, failed, warning
 
 
 def main(fastq_id, result_p1, result_p2, opts):
@@ -415,7 +450,9 @@ def main(fastq_id, result_p1, result_p2, opts):
 
     with open("{}_trim_report".format(fastq_id), "w") as trep_fh, \
             open("optimal_trim", "w") as trim_fh, \
-            open("{}_status_report".format(fastq_id), "w") as rep_fh:
+            open("{}_status_report".format(fastq_id), "w") as rep_fh, \
+            open(".status", "w") as status_fh, \
+            open(".warning", "w") as warn_fh:
 
         # Perform health check according to the FastQC summary report for
         # each pair. If both pairs pass the check, send the 'pass' information
@@ -428,9 +465,14 @@ def main(fastq_id, result_p1, result_p2, opts):
                 logger.debug("Checking files: {}".format(fastqc_summary))
                 # Get the boolean health variable and a list of failed
                 # categories, if any
-                health, f_cat = check_summary_health(fastqc_summary)
+                health, f_cat, warnings = check_summary_health(fastqc_summary)
                 logger.debug("Health checked: {}".format(health))
                 logger.debug("Failed categories: {}".format(f_cat))
+
+                # Write any warnings
+                if warnings:
+                    for w in warnings:
+                        warn_fh.write("{}\\n".format(w))
 
                 # Rename category summary file to the channel that will publish
                 # The results
@@ -468,13 +510,7 @@ def main(fastq_id, result_p1, result_p2, opts):
 
 if __name__ == '__main__':
 
-    import traceback
-
-    with open(".status", "w") as status_fh:
-
-        try:
-            main(FASTQ_ID, RESULT_P1, RESULT_P2, OPTS)
-        except Exception as e:
-            status_fh.write("fail")
-            logger.error("Module exited unexpectedly with error: {}".format(
-                traceback.format_exc()))
+    try:
+        main(FASTQ_ID, RESULT_P1, RESULT_P2, OPTS)
+    except Exception as _:
+        _log_error()
