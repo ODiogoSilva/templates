@@ -65,6 +65,18 @@ if __file__.endswith(".command.sh"):
     logger.debug("CPUS: {}".format(CPUS))
 
 
+def _log_error():
+    """Nextflow specific function that logs an error upon unexpected failing
+    """
+
+    import traceback
+
+    with open(".status", "w") as status_fh:
+        logger.error("Module exited unexpectedly with error:\\n{}".format(
+            traceback.format_exc()))
+        status_fh.write("error")
+
+
 def convert_adatpers(adapter_fasta):
     """Generates an adapter file for FastQC from a fasta file.
 
@@ -179,22 +191,23 @@ def main(fastq_pair, adapter_file, cpus):
 
     logger.info("Checking if FastQC output was correctly generated")
     # Check if the FastQC output was correctly generated.
-    for fastq in fastq_pair:
-        fpath = join(fastq.rsplit(".", 2)[0] + "_fastqc",
-                     "fastqc_data.txt")
-        logger.debug("Checking path: {}".format(fpath))
-        # If the FastQC output does not exist, pass the STDERR to
-        # the output status channel and exit
-        if not exists(fpath):
-            logger.warning("Path does not exist: {}".format(fpath))
-            status_fh.write("fail")
-            return
+    with open(".status", "w") as status_fh:
+        for fastq in fastq_pair:
+            fpath = join(fastq.rsplit(".", 2)[0] + "_fastqc",
+                         "fastqc_data.txt")
+            logger.debug("Checking path: {}".format(fpath))
+            # If the FastQC output does not exist, pass the STDERR to
+            # the output status channel and exit
+            if not exists(fpath):
+                logger.warning("Path does not exist: {}".format(fpath))
+                status_fh.write("fail")
+                return
 
-        logger.debug("Found path: {}".format(fpath))
+            logger.debug("Found path: {}".format(fpath))
 
-    # If the output directories exist, write 'pass' to the output status
-    # channel
-        status_fh.write("pass")
+        # If the output directories exist, write 'pass' to the output status
+        # channel
+            status_fh.write("pass")
 
     logger.info("Retrieving relevant FastQC output files")
 
@@ -217,13 +230,7 @@ def main(fastq_pair, adapter_file, cpus):
 
 if __name__ == "__main__":
 
-    import traceback
-
-    with open(".status", "w") as status_fh:
-
-        try:
-            main(FASTQ_PAIR, ADAPTER_FILE, CPUS)
-        except Exception as e:
-            status_fh.write("fail")
-            logger.error("Module exited unexpectedly with error: {}".format(
-                traceback.format_exc()))
+    try:
+        main(FASTQ_PAIR, ADAPTER_FILE, CPUS)
+    except Exception:
+        _log_error()

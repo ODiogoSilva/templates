@@ -83,6 +83,8 @@ if __file__.endswith(".command.sh"):
 
 
 def _log_error():
+    """Nextflow specific function that logs an error upon unexpected failing
+    """
 
     import traceback
 
@@ -512,5 +514,5 @@ if __name__ == '__main__':
 
     try:
         main(FASTQ_ID, RESULT_P1, RESULT_P2, OPTS)
-    except Exception as _:
+    except Exception:
         _log_error()
