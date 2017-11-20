@@ -514,5 +514,5 @@ if __name__ == '__main__':
 
     try:
         main(FASTQ_ID, RESULT_P1, RESULT_P2, OPTS)
-    except Exception:
+    except:
         _log_error()

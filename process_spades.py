@@ -23,6 +23,8 @@ The following variables are expected whether using NextFlow or the
         - e.g.: ``'150'``
     2. Minimum k-mer coverage.
         - e.g.: ``'2'``
+    3. Maximum number of contigs per 1.5Mb.
+        - e.g.: ``'100'``
 
 Generated output
 ----------------
@@ -69,6 +71,18 @@ if __file__.endswith(".command.sh"):
     logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
     logger.debug("GSIZE: {}".format(GSIZE))
     logger.debug("OPTS: {}".format(OPTS))
+
+
+def _log_error():
+    """Nextflow specific function that logs an error upon unexpected failing
+    """
+
+    import traceback
+
+    with open(".status", "w") as status_fh:
+        logger.error("Module exited unexpectedly with error:\\n{}".format(
+            traceback.format_exc()))
+        status_fh.write("error")
 
 
 class Assembly:
@@ -427,7 +441,7 @@ def main(fastq_id, assembly_file, gsize, opts):
 
     logger.info("Starting SPAdes processing")
 
-    min_contig_len, min_kmer_cov = [int(x) for x in opts]
+    min_contig_len, min_kmer_cov, max_contigs = [int(x) for x in opts]
     logger.debug("Setting minimum conting length to: {}".format(
         min_contig_len))
     logger.debug("Setting minimum kmer coverage: {}".format(min_kmer_cov))
@@ -437,13 +451,51 @@ def main(fastq_id, assembly_file, gsize, opts):
     spades_assembly = Assembly(assembly_file, min_contig_len, min_kmer_cov,
                                fastq_id)
 
-    # Check if assembly size of the first assembly is lower than 80% of the
-    # estimated genome size. If True, perform the filtering without the
-    # k-mer coverage filter
-    if spades_assembly.get_assembly_length() < gsize * 1000000 * 0.8:
-        spades_assembly.filter_contigs(*[
-            ["length", ">=", min_contig_len]
-        ])
+    with open(".warnings", "w") as warn_fh:
+        t_80 = gsize * 1000000 * 0.8
+        t_150 = gsize * 1000000 * 1.5
+        # Check if assembly size of the first assembly is lower than 80% of the
+        # estimated genome size. If True, perform the filtering without the
+        # k-mer coverage filter
+        assembly_len = spades_assembly.get_assembly_length()
+        logger.debug("Checking assembly length: {}".format(assembly_len))
+        if assembly_len < t_80:
+
+            logger.warning("Assembly size ({}) smaller than the minimum "
+                           "threshold of 80% of expected genome size. "
+                           "Applying contig filters without the k-mer "
+                           "coverage filter".format(assembly_len))
+            spades_assembly.filter_contigs(*[
+                ["length", ">=", min_contig_len]
+            ])
+
+            assembly_len = spades_assembly.get_assembly_length()
+            logger.debug("Checking updated assembly length: "
+                         "{}".format(assembly_len))
+            if assembly_len < t_80:
+
+                warn_msg = "Assembly size smaller than the minimum" \
+                           " threshold of 80% of expected genome size.".format(
+                                assembly_len)
+                logger.warning(warn_msg)
+                warn_fh.write(warn_msg)
+
+        if assembly_len > t_150:
+
+            warn_msg = "Assembly size ({}) smaller than the maximum" \
+                       " threshold of 150% of expected genome size.".format(
+                            assembly_len)
+            logger.warning(warn_msg)
+            warn_fh.write(warn_msg)
+
+        logger.debug("Checking number of contigs: {}".format(
+            len(spades_assembly.contigs)))
+        if len(spades_assembly.contigs) > (max_contigs * gsize) / 1.5:
+
+            warn_msg = "The number of contigs ({}) exceeds the threshold of " \
+                       "100 contigs per 1.5Mb".format(spades_assembly.contigs)
+            logger.warning(warn_msg)
+            warn_fh.write(warn_msg)
 
     # Write filtered assembly
     output_assembly = "{}.assembly.fasta".format(fastq_id)
@@ -452,18 +504,13 @@ def main(fastq_id, assembly_file, gsize, opts):
     output_report = "{}.report.csv".format(fastq_id)
     spades_assembly.write_report(output_report)
 
-    status_fh.write("pass")
+    with open(".status", "w") as status_fh:
+        status_fh.write("pass")
 
 
 if __name__ == '__main__':
 
-    import traceback
-
-    with open(".status", "w") as status_fh:
-
-        try:
-            main(FASTQ_ID, ASSEMBLY_FILE, GSIZE, OPTS)
-        except Exception as e:
-            status_fh.write("fail")
-            logger.error("Module exited unexpectedly with error: {}".format(
-                traceback.format_exc()))
+    try:
+        main(FASTQ_ID, ASSEMBLY_FILE, GSIZE, OPTS)
+    except:
+        _log_error()
