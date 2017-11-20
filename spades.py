@@ -77,6 +77,18 @@ if __file__.endswith(".command.sh"):
     logger.debug("OPTS: {}".format(OPTS))
 
 
+def _log_error():
+    """Nextflow specific function that logs an error upon unexpected failing
+    """
+
+    import traceback
+
+    with open(".status", "w") as status_fh:
+        logger.error("Module exited unexpectedly with error:\\n{}".format(
+            traceback.format_exc()))
+        status_fh.write("error")
+
+
 def set_kmers(kmer_opt, max_read_len):
     """Returns a kmer list based on the provided kmer option and max read len.
 
@@ -197,7 +209,7 @@ def main(fastq_id, fastq_pair, max_len, kmer, opts):
 
     with open(".status", "w") as fh:
         if p.returncode != 0:
-            fh.write("fail")
+            fh.write("error")
             return
         else:
             fh.write("pass")
@@ -210,13 +222,7 @@ def main(fastq_id, fastq_pair, max_len, kmer, opts):
 
 if __name__ == '__main__':
 
-    import traceback
-
-    with open(".status", "w") as status_fh:
-
-        try:
-            main(FASTQ_ID, FASTQ_PAIR, MAX_LEN, KMERS, OPTS)
-        except Exception as e:
-            status_fh.write("fail")
-            logger.error("Module exited unexpectedly with error: {}".format(
-                traceback.format_exc()))
+    try:
+        main(FASTQ_ID, FASTQ_PAIR, MAX_LEN, KMERS, OPTS)
+    except:
+        _log_error()
