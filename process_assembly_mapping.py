@@ -23,9 +23,11 @@ The following variables are expected whether using NextFlow or the
     - e.g.: ``'coverage.tsv'``
 - ``bam_file`` : BAM file with the alignment of reads to the genome.
     - e.g.: ``'sorted.bam'``
-- ``min_assembly_coverage`` : Minimum coverage for assembled contigs. Can be\
-    ``auto``.
-    - e.g.: ``'auto'`` or ``'10'``
+- ``opts`` : List of options for processing assembly mapping output.
+    1. Minimum coverage for assembled contigs. Can be``auto``.
+        - e.g.: ``'auto'`` or ``'10'``
+    2. Maximum number of contigs.
+        - e.g.: '100'
 - ``gsize``: Expected genome size.
     - e.g.: ``'2.5'``
 
@@ -72,7 +74,7 @@ if __file__.endswith(".command.sh"):
     ASSEMBLY_FILE = '$assembly'
     COVERAGE_FILE = '$coverage'
     BAM_FILE = '$bam_file'
-    MIN_ASSEMBLY_COVERAGE = '$min_assembly_coverage'
+    OPTS = [x.strip() for x in '$opts'.strip("[]").split(",")]
     GSIZE = float('$gsize')
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
@@ -80,8 +82,20 @@ if __file__.endswith(".command.sh"):
     logger.debug("ASSEMBLY_FILE: {}".format(ASSEMBLY_FILE))
     logger.debug("COVERAGE_FILE: {}".format(COVERAGE_FILE))
     logger.debug("BAM_FILE: {}".format(BAM_FILE))
-    logger.debug("MIN_ASSEMBLY_COVERAGE: {}".format(MIN_ASSEMBLY_COVERAGE))
+    logger.debug("MIN_ASSEMBLY_COVERAGE: {}".format(OPTS))
     logger.debug("GSIZE: {}".format(GSIZE))
+
+
+def _log_error():
+    """Nextflow specific function that logs an error upon unexpected failing
+    """
+
+    import traceback
+
+    with open(".status", "w") as status_fh:
+        logger.error("Module exited unexpectedly with error:\\n{}".format(
+            traceback.format_exc()))
+        status_fh.write("error")
 
 
 def parse_coverage_table(coverage_file):
@@ -271,7 +285,8 @@ def filter_bam(coverage_info, bam_file, min_coverage, output_bam):
             p.returncode))
 
 
-def check_filtered_assembly(coverage_info, minimum_coverage, genome_size):
+def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
+                            max_contigs):
     """Checks whether a filtered assembly passes a size threshold
 
     Given a minimum coverage threshold, this function evaluates whether an
@@ -282,10 +297,13 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size):
     ----------
     coverage_info : OrderedDict or dict
         Dictionary containing the coverage information for each contig.
-    min_coverage : int
+    minimum_coverage : int
         Minimum coverage required for a contig to pass the filter.
     genome_size : int
         Expected genome size.
+    max_contigs : int
+        Maximum threshold for contig number. A warning is issued if this
+        threshold is crossed.
 
     Returns
     -------
@@ -296,22 +314,52 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size):
     """
 
     # Get size of assembly after filtering contigs below minimum_coverage
-    assembly_size = sum([x["len"] for x in coverage_info.values()
-                         if x["cov"] >= minimum_coverage])
-    logger.debug("Assembly size after filtering is: {}".format(assembly_size))
+    assembly_len = sum([x["len"] for x in coverage_info.values()
+                        if x["cov"] >= minimum_coverage])
+    # Get number of contigs after filtering
+    ncontigs = len([x for x in coverage_info.values()
+                    if x["cov"] >= minimum_coverage])
 
-    # If the filtered assembly size falls below the 80% genome size threshold,
-    # fail this check and return False
-    if assembly_size < genome_size * 1e6 * 0.8:
-        logger.warning("Filtered assembly size is below minimum allowed size"
-                       " of 80% genome size")
-        return False
-    else:
+    with open(".warnings", "w") as warn_fh:
+
+        logger.debug("Checking assembly size after filtering : {}".format(
+            assembly_len))
+
+        # If the filtered assembly size is above the 150% genome size
+        # threshold, issue a warning
+        if assembly_len > genome_size * 1e6 * 1.5:
+            warn_msg = "Assembly size ({}) smaller than the maximum" \
+                       " threshold of 150% of expected genome size.".format(
+                            assembly_len)
+            logger.warning(warn_msg)
+            warn_fh.write(warn_msg)
+
+        # If the number of contigs in the filtered assembly size crosses the
+        # max_contigs threshold, issue a warning
+        logger.debug("Checking number of contigs: {}".format(
+                len(coverage_info)))
+        if ncontigs > max_contigs:
+            warn_msg = "The number of contigs ({}) exceeds the threshold of " \
+                       "100 contigs per 1.5Mb".format(ncontigs)
+            logger.warning(warn_msg)
+            warn_fh.write(warn_msg)
+
+        # If the filtered assembly size falls below the 80% genome size
+        # threshold, fail this check and return False
+        if assembly_len < genome_size * 1e6 * 0.8:
+            warn_msg = "Assembly size smaller than the minimum" \
+                       " threshold of 80% of expected genome size.".format(
+                            assembly_len)
+            logger.warning(warn_msg)
+            warn_fh.write(warn_msg)
+
+            return False
+
         return True
 
 
 def main(fastq_id, assembly_file, coverage_file, bam_file,
-         min_assembly_coverage, gsize):
+         opts, gsize):
     """Main executor of the process_assembly_mapping template.
 
     Parameters
@@ -324,12 +372,14 @@ def main(fastq_id, assembly_file, coverage_file, bam_file,
         Path to TSV file with coverage information for each contig.
     bam_file : str
         Path to BAM file.
-    min_assembly_coverage : int
-        Minimum coverage required for a contig to pass.
+    opts : list
+        List of options for processing assembly mapping.
     gsize : int
         Expected genome size
 
     """
+
+    min_assembly_coverage, max_contigs = opts
 
     logger.info("Starting assembly mapping processing")
 
@@ -364,7 +414,8 @@ def main(fastq_id, assembly_file, coverage_file, bam_file,
     filtered_assembly = "{}_filtered.assembly.fasta".format(fastq_id)
     filtered_bam = "filtered.bam"
     logger.info("Checking filtered assembly")
-    if check_filtered_assembly(coverage_info, min_coverage, gsize):
+    if check_filtered_assembly(coverage_info, min_coverage, gsize,
+                               int(max_contigs)):
         # Filter assembly contigs based on the minimum coverage.
         logger.info("Filtered assembly passed minimum size threshold")
         logger.info("Writting filtered assembly")
@@ -379,19 +430,13 @@ def main(fastq_id, assembly_file, coverage_file, bam_file,
         shutil.copy(assembly_file, filtered_assembly)
         shutil.copy(bam_file, filtered_bam)
 
-    status_fh.write("pass")
+    with open(".status", "w") as status_fh:
+        status_fh.write("pass")
 
 
 if __name__ == '__main__':
 
-    import traceback
-
-    with open(".status", "w") as status_fh:
-
-        try:
-            main(FASTQ_ID, ASSEMBLY_FILE, COVERAGE_FILE, BAM_FILE,
-                 MIN_ASSEMBLY_COVERAGE, GSIZE)
-        except Exception as e:
-            status_fh.write("fail")
-            logger.error("Module exited unexpectedly with error: {}".format(
-                traceback.format_exc()))
+    try:
+        main(FASTQ_ID, ASSEMBLY_FILE, COVERAGE_FILE, BAM_FILE,OPTS, GSIZE)
+    except Exception as e:
+        _log_error()
