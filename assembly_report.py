@@ -59,6 +59,18 @@ if __file__.endswith(".command.sh"):
     logger.debug("ASSEMBLY_FILE: {}".format(ASSEMBLY_FILE))
 
 
+def _log_error():
+    """Nextflow specific function that logs an error upon unexpected failing
+    """
+
+    import traceback
+
+    with open(".status", "w") as status_fh:
+        logger.error("Module exited unexpectedly with error:\\n{}".format(
+            traceback.format_exc()))
+        status_fh.write("error")
+
+
 class Assembly:
     """Class that parses and filters an assembly file in Fasta format.
 
@@ -236,16 +248,13 @@ def main(fastq_id, assembly_file):
     logger.info("Retrieving summary statistics for assembly")
     assembly_obj.get_summary_stats("{}_assembly_report.csv".format(fastq_id))
 
+    with open(".status", "w") as status_fh:
+        status_fh.write("pass")
+
 
 if __name__ == '__main__':
 
-    import traceback
-
-    with open(".status", "w") as status_fh:
-
-        try:
-            main(FASTQ_ID, ASSEMBLY_FILE)
-        except Exception as e:
-            status_fh.write("fail")
-            logger.error("Module exited unexpectedly with error: {}".format(
-                traceback.format_exc()))
+    try:
+        main(FASTQ_ID, ASSEMBLY_FILE)
+    except Exception as e:
+        _log_error()
