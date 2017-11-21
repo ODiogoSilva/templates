@@ -326,7 +326,8 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             open("{}_coverage".format(fastq_id), "w") as cov_fh, \
             open("{}_report".format(fastq_id), "w") as cov_rep, \
             open("{}_max_len".format(fastq_id), "w") as len_fh, \
-            open(".status", "w") as status_fh:
+            open(".status", "w") as status_fh, \
+            open(".fail", "w") as fail_fh:
 
         try:
             # Iterate over both pair files sequentially using itertools.chain
@@ -391,6 +392,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
                         "{}".format(gsize))
             exp_coverage = round(chars / (gsize * 1e6), 2)
             logger.info("Expected coverage is {}".format(exp_coverage))
+
             if exp_coverage >= minimum_coverage:
                 cov_rep.write("{},{},{}\\n".format(
                     fastq_id, str(exp_coverage), "PASS"))
@@ -405,6 +407,9 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
                     fastq_id, str(exp_coverage), "FAIL"))
                 cov_fh.write("fail")
                 status_fh.write("fail")
+                fail_fh.write("Sample with low coverage ({}), below the {}"
+                              " threshold".format(exp_coverage,
+                                                  minimum_coverage))
 
             # Maximum read length
             len_fh.write("{}".format(max_read_length))
@@ -416,6 +421,8 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             for fh in [enc_fh, phred_fh, cov_fh, cov_rep, len_fh]:
                 fh.write("corrupt")
                 status_fh.write("fail")
+                fail_fh.write("Could not read/parse FastQ. "
+                              "Possibly corrupt file")
 
 
 if __name__ == "__main__":

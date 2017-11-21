@@ -454,7 +454,8 @@ def main(fastq_id, result_p1, result_p2, opts):
             open("optimal_trim", "w") as trim_fh, \
             open("{}_status_report".format(fastq_id), "w") as rep_fh, \
             open(".status", "w") as status_fh, \
-            open(".warning", "w") as warn_fh:
+            open(".warning", "w") as warn_fh, \
+            open(".fail", "w") as fail_fh:
 
         # Perform health check according to the FastQC summary report for
         # each pair. If both pairs pass the check, send the 'pass' information
@@ -489,6 +490,8 @@ def main(fastq_id, result_p1, result_p2, opts):
                     logger.warning("Sample failed quality control checks")
                     status_fh.write("fail")
                     trim_fh.write("fail")
+                    fail_fh.write("Sample failed quality control checks:"
+                                  " {}".format(",".join(f_cat)))
                     rep_fh.write("{}, {}\\n".format(fastq_id, ",".join(f_cat)))
                     trep_fh.write("{},fail,fail\\n".format(fastq_id))
 
