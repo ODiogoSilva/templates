@@ -422,7 +422,8 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             json_dic = {
                 "bp": chars,
                 "reads": nreads,
-                "coverage": exp_coverage
+                "coverage": exp_coverage,
+                "min_coverage": minimum_coverage,
             }
             json_report.write(json.dumps(json_dic))
 
