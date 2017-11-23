@@ -31,6 +31,7 @@ Code documentation
 """
 
 import os
+import json
 import logging
 
 from collections import OrderedDict
@@ -247,6 +248,15 @@ def main(fastq_id, assembly_file):
 
     logger.info("Retrieving summary statistics for assembly")
     assembly_obj.get_summary_stats("{}_assembly_report.csv".format(fastq_id))
+
+    # Write json report
+    with open(".report.json", "w") as json_report:
+        json_dic = {
+            "contigs": assembly_obj.summary_info["ncontigs"],
+            "bp": assembly_obj.summary_info["total_len"],
+            "size_dist": [len(x) for x in assembly_obj.contigs.values()],
+        }
+        json_report.write(json.dumps(json_dic))
 
     with open(".status", "w") as status_fh:
         status_fh.write("pass")

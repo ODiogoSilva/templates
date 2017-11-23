@@ -50,6 +50,7 @@ Code documentation
 """
 
 import os
+import json
 import logging
 
 from collections import OrderedDict
@@ -92,6 +93,87 @@ def _log_error():
         logger.error("Module exited unexpectedly with error:\\n{}".format(
             traceback.format_exc()))
         status_fh.write("error")
+
+
+def _get_quality_stats(d, start_str):
+    """
+
+    Parameters
+    ----------
+    d
+
+    Returns
+    -------
+
+    """
+
+    parse = False
+    report = []
+    start_str = start_str
+    end_str = ">>END_MODULE"
+
+    with open(d) as fh:
+
+        for line in fh:
+
+            if line.startswith(start_str):
+                next(fh)
+                parse = True
+                status = line.strip().split()[-1]
+
+            # Exit parser when end string is found
+            elif parse and line.startswith(end_str):
+                return report, status
+
+            elif parse:
+                fields = line.strip().split()
+                report.append((fields[0], fields[1]))
+
+
+def write_json_report(data1, data2):
+    """Writes the report
+
+    Parameters
+    ----------
+    data1
+    data2
+
+    Returns
+    -------
+
+    """
+
+    parser_map = {
+        "base_sequence_quality": ">>Per base sequence quality",
+        "sequence_quality": ">>Per sequence quality scores",
+        "base_gc_content": ">>Per sequence GC content",
+        "base_n_content": ">>Per base N content",
+        "sequence_length_dist": ">>Sequence Length Distribution"
+    }
+
+    json_dic = {
+        "base_sequence_quality": {"status": None, "data": []},
+        "sequence_quality": {"status": None, "data": []},
+        "base_gc_content": {"status": None, "data": []},
+        "base_n_content": {"status": None, "data": []},
+        "sequence_length_dist": {"status": None, "data": []}
+    }
+
+    for cat, start_str in parser_map.items():
+
+        report1, status1 = _get_quality_stats(data1, start_str)
+        report2, status2 = _get_quality_stats(data2, start_str)
+
+        status = None
+        for i in ["fail", "warn", "pass"]:
+            if i in [status1, status2]:
+                status = i
+
+        json_dic[cat]["data"] = [report1, report2]
+        json_dic[cat]["status"] = status
+
+    with open(".report.json", "w") as fh:
+        fh.write(json.dumps(json_dic))
 
 
 def get_trim_index(biased_list):
@@ -462,6 +544,9 @@ def main(fastq_id, result_p1, result_p2, opts):
         # to the 'fastqc_health' channel. If at least one fails, send the
         # summary report.
         if "--ignore-tests" not in opts:
+
+            write_json_report(result_p1[0], result_p2[0])
+
             logger.info("Performing FastQ health check")
             for p, fastqc_summary in enumerate([result_p1[1], result_p2[1]]):
 
