@@ -77,6 +77,7 @@ Code documentation
 import os
 import bz2
 import gzip
+import json
 import logging
 import zipfile
 
@@ -288,6 +289,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
 
     # Information for coverage estimation
     chars = 0
+    nreads = 0
 
     # Information on maximum read length
     max_read_length = 0
@@ -326,6 +328,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             open("{}_coverage".format(fastq_id), "w") as cov_fh, \
             open("{}_report".format(fastq_id), "w") as cov_rep, \
             open("{}_max_len".format(fastq_id), "w") as len_fh, \
+            open(".report.json", "w") as json_report, \
             open(".status", "w") as status_fh, \
             open(".fail", "w") as fail_fh:
 
@@ -356,6 +359,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
                 if (i + 3) % 4 == 0:
                     read_len = len(line.strip())
                     chars += read_len
+                    nreads += 1
 
                     # Evaluate maximum read length for sample
                     if read_len > max_read_length:
@@ -413,6 +417,14 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
 
             # Maximum read length
             len_fh.write("{}".format(max_read_length))
+
+            # Set json report
+            json_dic = {
+                "bp": chars,
+                "reads": nreads,
+                "coverage": exp_coverage
+            }
+            json_report.write(json.dumps(json_dic))
 
         # This exception is raised when the input FastQ files are corrupted
         except EOFError:
