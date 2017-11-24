@@ -127,7 +127,7 @@ def _get_quality_stats(d, start_str):
 
             elif parse:
                 fields = line.strip().split()
-                report.append((fields[0], fields[1]))
+                report.append((str(fields[0]), str(fields[1])))
 
 
 def write_json_report(data1, data2):
