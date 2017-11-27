@@ -441,6 +441,7 @@ def main(fastq_id, assembly_file, gsize, opts):
     """
 
     logger.info("Starting SPAdes processing")
+    warnings = []
 
     min_contig_len, min_kmer_cov, max_contigs = [int(x) for x in opts]
     logger.debug("Setting minimum conting length to: {}".format(
@@ -480,6 +481,7 @@ def main(fastq_id, assembly_file, gsize, opts):
                                 assembly_len)
                 logger.warning(warn_msg)
                 warn_fh.write(warn_msg)
+                warnings.append("small_size")
 
         if assembly_len > t_150:
 
@@ -488,6 +490,7 @@ def main(fastq_id, assembly_file, gsize, opts):
                             assembly_len)
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
+            warnings.append("large_size")
 
         logger.debug("Checking number of contigs: {}".format(
             len(spades_assembly.contigs)))
@@ -497,6 +500,7 @@ def main(fastq_id, assembly_file, gsize, opts):
                        "100 contigs per 1.5Mb".format(spades_assembly.contigs)
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
+            warnings.append("excessive_contigs")
 
     # Write filtered assembly
     output_assembly = "{}.assembly.fasta".format(fastq_id)
@@ -509,10 +513,11 @@ def main(fastq_id, assembly_file, gsize, opts):
         json_dic = {
             "contigs": len(spades_assembly.contigs),
             "bp": assembly_len,
-            "size_dist": [x["length"] for x in
-                          spades_assembly.contigs.values()],
-            "coverage_dist": [x["kmer_cov"] for x in
-                              spades_assembly.contigs.values()]
+            "size_dist": [
+                x["length"] for x in spades_assembly.contigs.values()],
+            "coverage_dist": [
+                x["kmer_cov"] for x in spades_assembly.contigs.values()],
+            "warnings": warnings
         }
         json_report.write(json.dumps(json_dic))
 
