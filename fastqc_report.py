@@ -95,7 +95,7 @@ def _log_error():
         status_fh.write("error")
 
 
-def _get_quality_stats(d, start_str):
+def _get_quality_stats(d, start_str, field_start=1, field_end=2):
     """
 
     Parameters
@@ -127,7 +127,8 @@ def _get_quality_stats(d, start_str):
 
             elif parse:
                 fields = line.strip().split()
-                report.append((str(fields[0]), str(fields[1])))
+                report.append((str(fields[0]),
+                               ";".join(fields[field_start: field_end])))
 
 
 def write_json_report(data1, data2):
@@ -148,7 +149,8 @@ def write_json_report(data1, data2):
         "sequence_quality": ">>Per sequence quality scores",
         "base_gc_content": ">>Per sequence GC content",
         "base_n_content": ">>Per base N content",
-        "sequence_length_dist": ">>Sequence Length Distribution"
+        "sequence_length_dist": ">>Sequence Length Distribution",
+        "per_base_sequence_content": ">>Per base sequence content"
     }
 
     json_dic = {
@@ -156,13 +158,23 @@ def write_json_report(data1, data2):
         "sequence_quality": {"status": None, "data": []},
         "base_gc_content": {"status": None, "data": []},
         "base_n_content": {"status": None, "data": []},
-        "sequence_length_dist": {"status": None, "data": []}
+        "sequence_length_dist": {"status": None, "data": []},
+        "per_base_sequence_content": {"status": None, "data": []}
     }
 
     for cat, start_str in parser_map.items():
 
-        report1, status1 = _get_quality_stats(data1, start_str)
-        report2, status2 = _get_quality_stats(data2, start_str)
+        if cat == "per_base_sequence_content":
+            fs = 1
+            fe = -1
+        else:
+            fs = 1
+            fe = 2
+
+        report1, status1 = _get_quality_stats(data1, start_str,
+                                              field_start=fs, field_end=fe)
+        report2, status2 = _get_quality_stats(data2, start_str,
+                                              field_start=fs, field_end=fe)
 
         status = None
         for i in ["fail", "warn", "pass"]:
