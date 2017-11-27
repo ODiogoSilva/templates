@@ -47,6 +47,7 @@ Code documentation
 
 import os
 import re
+import json
 import shutil
 import logging
 import subprocess
@@ -319,8 +320,11 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
     # Get number of contigs after filtering
     ncontigs = len([x for x in coverage_info.values()
                     if x["cov"] >= minimum_coverage])
+    warnings = []
+    health = True
 
-    with open(".warnings", "w") as warn_fh:
+    with open(".warnings", "w") as warn_fh, \
+            open(".report.json", "w") as json_report:
 
         logger.debug("Checking assembly size after filtering : {}".format(
             assembly_len))
@@ -333,6 +337,7 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
                             assembly_len)
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
+            warnings.append("large_size")
 
         # If the number of contigs in the filtered assembly size crosses the
         # max_contigs threshold, issue a warning
@@ -343,6 +348,7 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
                        "100 contigs per 1.5Mb".format(ncontigs)
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
+            warnings.append("excessive_contigs")
 
         # If the filtered assembly size falls below the 80% genome size
         # threshold, fail this check and return False
@@ -352,10 +358,16 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
                             assembly_len)
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
+            warnings.append("small_size")
 
-            return False
+            health = False
 
-        return True
+        json_dic = {
+            "warnings": warnings
+        }
+        json_report.write(json.dumps(json_dic))
+
+    return health
 
 
 def main(fastq_id, assembly_file, coverage_file, bam_file,
