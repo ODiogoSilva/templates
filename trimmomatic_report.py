@@ -155,7 +155,10 @@ def write_report(storage_dic, output_file):
                 sample, ",".join([str(x) for x in vals.values()])))
 
             json_dic = {
-                {"table-row": {"trim_perc": vals["total_trim_perc"]}},
+                {"table-row": {
+                    "header": "trimmed",
+                    "value": vals["total_trim_perc"],
+                    "column-bar": True}},
                 {"misc": {"bad_reads": vals["bad_reads"]}}
             }
             json_rep.write(json.dumps(json_dic))

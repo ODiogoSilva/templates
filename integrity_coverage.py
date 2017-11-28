@@ -421,14 +421,26 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             # Set json report
             if "-e" in opts:
                 json_dic = {
-                    {"table-row": {"bp": chars}},
-                    {"table-row": {"reads": nreads}},
-                    {"table-row": {"coverage": exp_coverage}},
+                    {"table-row": {
+                        "header": "bp",
+                        "value": chars,
+                        "column-bar": True}},
+                    {"table-row": {
+                        "header": "reads",
+                        "value": nreads,
+                        "column-bar": True}},
+                    {"table-row": {
+                        "header": "coverage (1st)",
+                        "value": exp_coverage,
+                        "column-bar": True}},
                     {"table-info": {"min_coverage": minimum_coverage}}
                 }
             else:
                 json_dic = {
-                    {"table-row": {"coverage": exp_coverage}},
+                    {"table-row": {
+                        "header": "coverage (2nd)",
+                        "value": exp_coverage,
+                        "column-bar": True}},
                     {"table-info": {"min_coverage": minimum_coverage}}
                 }
             json_report.write(json.dumps(json_dic))

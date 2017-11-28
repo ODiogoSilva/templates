@@ -253,8 +253,14 @@ def main(fastq_id, assembly_file):
     with open(".report.json", "w") as json_report:
         size_dist = [len(x) for x in assembly_obj.contigs.values()]
         json_dic = {
-            {"table-row": {"contigs": assembly_obj.summary_info["ncontigs"]}},
-            {"table-row": {"bp": assembly_obj.summary_info["total_len"]}},
+            {"table-row": {
+                "header": "contigs",
+                "value": assembly_obj.summary_info["ncontigs"],
+                "column-bar": True}},
+            {"table-row": {
+                "header": "assembled bp",
+                "value": assembly_obj.summary_info["total_len"],
+                "column-bar": True}},
             {"plot-data": {"size_dist": size_dist}}
         }
         json_report.write(json.dumps(json_dic))
