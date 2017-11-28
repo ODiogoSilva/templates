@@ -363,7 +363,7 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
             health = False
 
         json_dic = {
-            {"warnings": warnings}
+            "warnings": warnings
         }
         json_report.write(json.dumps(json_dic))
 

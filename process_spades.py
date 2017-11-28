@@ -526,7 +526,7 @@ def main(fastq_id, assembly_file, gsize, opts):
             #     "column-bar": True}},
             # {"plot-data": {"size_dist": size_dist,
             #                "cov_size": cov_dist}},
-            {"warnings": warnings}
+            "warnings": warnings
         }
         json_report.write(json.dumps(json_dic))
 
