@@ -494,10 +494,13 @@ def main(fastq_id, assembly_file, gsize, opts):
 
         logger.debug("Checking number of contigs: {}".format(
             len(spades_assembly.contigs)))
-        if len(spades_assembly.contigs) > (max_contigs * gsize) / 1.5:
+        contig_threshold = (max_contigs * gsize) / 1.5
+        if len(spades_assembly.contigs) > contig_threshold:
 
             warn_msg = "The number of contigs ({}) exceeds the threshold of " \
-                       "100 contigs per 1.5Mb".format(spades_assembly.contigs)
+                       "100 contigs per 1.5Mb ({})".format(
+                            spades_assembly.contigs, contig_threshold)
+
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
             warnings.append("excessive_contigs")
