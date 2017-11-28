@@ -421,30 +421,30 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             # Set json report
             if "-e" not in opts:
                 json_dic = {
-                    "bp": {
-                        "header": "bp",
-                        "value": chars,
-                        "table-row": True,
-                        "column-bar": True},
-                    "reads": {
-                        "header": "reads",
-                        "value": nreads,
-                        "table-row": True,
-                        "column-bar": True},
-                    "coverage": {
-                        "header": "coverage (1st)",
-                        "value": exp_coverage,
-                        "table-row": True,
-                        "column-bar": True},
+                    "table-row": [
+                        {"header": "bp",
+                         "value": chars,
+                         "table-row": True,
+                         "column-bar": True},
+                        {"header": "reads",
+                         "value": nreads,
+                         "table-row": True,
+                         "column-bar": True},
+                        {"header": "coverage (1st)",
+                         "value": exp_coverage,
+                         "table-row": True,
+                         "column-bar": True}
+                        ],
                     "min_coverage": minimum_coverage
                 }
             else:
                 json_dic = {
-                    "coverage": {
-                        "header": "coverage (2nd)",
-                        "value": exp_coverage,
-                        "table-row": True,
-                        "column-bar": True},
+                    "table_row": [
+                        {"header": "coverage (2nd)",
+                         "value": exp_coverage,
+                         "table-row": True,
+                         "column-bar": True},
+                    ],
                     "min_coverage": minimum_coverage
                 }
             json_report.write(json.dumps(json_dic))
