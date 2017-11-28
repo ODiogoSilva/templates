@@ -481,7 +481,7 @@ def main(fastq_id, assembly_file, gsize, opts):
                                 assembly_len)
                 logger.warning(warn_msg)
                 warn_fh.write(warn_msg)
-                warnings.append("small_size")
+                warnings.append("small_size:moderate")
 
         if assembly_len > t_150:
 
@@ -490,7 +490,7 @@ def main(fastq_id, assembly_file, gsize, opts):
                             assembly_len)
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
-            warnings.append("large_size")
+            warnings.append("large_size:moderate")
 
         logger.debug("Checking number of contigs: {}".format(
             len(spades_assembly.contigs)))
@@ -503,7 +503,7 @@ def main(fastq_id, assembly_file, gsize, opts):
 
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
-            warnings.append("excessive_contigs")
+            warnings.append("excessive_contigs:moderate")
 
     # Write filtered assembly
     output_assembly = "{}.assembly.fasta".format(fastq_id)

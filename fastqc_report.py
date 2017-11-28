@@ -184,8 +184,9 @@ def write_json_report(data1, data2):
         json_dic[cat]["data"] = [report1, report2]
         json_dic[cat]["status"] = status
 
-    with open(".report.json", "w") as fh:
-        fh.write(json.dumps(json_dic))
+    return json_dic
+    # with open(".report.json", "w") as fh:
+    #     fh.write(json.dumps(json_dic))
 
 
 def get_trim_index(biased_list):
@@ -488,7 +489,7 @@ def check_summary_health(summary_file, **kwargs):
             health = False
             failed.append("{}:{}".format(cat, test))
             logger.error("Category {} failed a fail sensitive "
-                           "category".format(cat))
+                         "category".format(cat))
 
         # Check for must pass
         if cat in must_pass and test != "PASS":
@@ -500,12 +501,12 @@ def check_summary_health(summary_file, **kwargs):
         # WARNINGS
         # Check for fail sensitive
         if cat in warning_fail_sensitive and test == "FAIL":
-            warning.append("{}:{}".format(cat, test))
+            warning.append("{}:low".format(cat))
             logger.warning("Category {} flagged at a fail sensitive "
                            "category".format(cat))
 
         if cat in warning_must_pass and test != "PASS":
-            warning.append("{}:{}".format(cat, test))
+            warning.append("{}:low".format(cat))
             logger.warning("Category {} flagged at a must pass "
                            "category".format(cat))
 
@@ -557,7 +558,8 @@ def main(fastq_id, result_p1, result_p2, opts):
         # summary report.
         if "--ignore-tests" not in opts:
 
-            write_json_report(result_p1[0], result_p2[0])
+            # Get reports for each category in json format
+            json_dic = write_json_report(result_p1[0], result_p2[0])
 
             logger.info("Performing FastQ health check")
             for p, fastqc_summary in enumerate([result_p1[1], result_p2[1]]):

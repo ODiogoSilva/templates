@@ -337,7 +337,7 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
                             assembly_len)
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
-            warnings.append("large_size")
+            warnings.append("large_size:high")
 
         # If the number of contigs in the filtered assembly size crosses the
         # max_contigs threshold, issue a warning
@@ -348,7 +348,7 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
                        "100 contigs per 1.5Mb".format(ncontigs)
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
-            warnings.append("excessive_contigs")
+            warnings.append("excessive_contigs:high")
 
         # If the filtered assembly size falls below the 80% genome size
         # threshold, fail this check and return False
@@ -358,7 +358,7 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
                             assembly_len)
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
-            warnings.append("small_size")
+            warnings.append("small_size:high")
 
             health = False
 
