@@ -185,8 +185,6 @@ def write_json_report(data1, data2):
         json_dic[cat]["status"] = status
 
     return json_dic
-    # with open(".report.json", "w") as fh:
-    #     fh.write(json.dumps(json_dic))
 
 
 def get_trim_index(biased_list):

@@ -419,12 +419,18 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             len_fh.write("{}".format(max_read_length))
 
             # Set json report
-            json_dic = {
-                "bp": str(chars),
-                "reads": str(nreads),
-                "coverage": str(exp_coverage),
-                "min_coverage": str(minimum_coverage),
-            }
+            if "-e" in opts:
+                json_dic = {
+                    {"table-row": {"bp": chars}},
+                    {"table-row": {"reads": nreads}},
+                    {"table-row": {"coverage": exp_coverage}},
+                    {"table-info": {"min_coverage": minimum_coverage}}
+                }
+            else:
+                json_dic = {
+                    {"table-row": {"coverage": exp_coverage}},
+                    {"table-info": {"min_coverage": minimum_coverage}}
+                }
             json_report.write(json.dumps(json_dic))
 
         # This exception is raised when the input FastQ files are corrupted
