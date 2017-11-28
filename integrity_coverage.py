@@ -419,7 +419,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             len_fh.write("{}".format(max_read_length))
 
             # Set json report
-            if "-e" in opts:
+            if "-e" not in opts:
                 json_dic = {
                     "bp": {
                         "header": "bp",
