@@ -154,12 +154,14 @@ def write_json_report(data1, data2):
     }
 
     json_dic = {
-        "base_sequence_quality": {"status": None, "data": []},
-        "sequence_quality": {"status": None, "data": []},
-        "base_gc_content": {"status": None, "data": []},
-        "base_n_content": {"status": None, "data": []},
-        "sequence_length_dist": {"status": None, "data": []},
-        "per_base_sequence_content": {"status": None, "data": []}
+        "plot-data": [
+            {"base_sequence_quality": {"status": None, "data": []}},
+            {"sequence_quality": {"status": None, "data": []}},
+            {"base_gc_content": {"status": None, "data": []}},
+            {"base_n_content": {"status": None, "data": []}},
+            {"sequence_length_dist": {"status": None, "data": []}},
+            {"per_base_sequence_content": {"status": None, "data": []}}
+        ]
     }
 
     for cat, start_str in parser_map.items():
@@ -181,8 +183,8 @@ def write_json_report(data1, data2):
             if i in [status1, status2]:
                 status = i
 
-        json_dic[cat]["data"] = [report1, report2]
-        json_dic[cat]["status"] = status
+        json_dic["plot-data"][cat]["data"] = [report1, report2]
+        json_dic["plot-data"][cat]["status"] = status
 
     return json_dic
 
@@ -548,7 +550,8 @@ def main(fastq_id, result_p1, result_p2, opts):
             open("{}_status_report".format(fastq_id), "w") as rep_fh, \
             open(".status", "w") as status_fh, \
             open(".warning", "w") as warn_fh, \
-            open(".fail", "w") as fail_fh:
+            open(".fail", "w") as fail_fh, \
+            open(".report.json", "w") as report_fh:
 
         # Perform health check according to the FastQC summary report for
         # each pair. If both pairs pass the check, send the 'pass' information
@@ -571,8 +574,13 @@ def main(fastq_id, result_p1, result_p2, opts):
 
                 # Write any warnings
                 if warnings:
+                    json_dic["warnings"] = {
+                        "process": "FastQC",
+                        "value": []
+                    }
                     for w in warnings:
                         warn_fh.write("{}\\n".format(w))
+                        json_dic["warnings"]["value"].append(w)
 
                 # Rename category summary file to the channel that will publish
                 # The results
@@ -608,6 +616,8 @@ def main(fastq_id, result_p1, result_p2, opts):
 
         trep_fh.write("{},{},{}\\n".format(fastq_id, optimal_trim[0],
                                            optimal_trim[1]))
+
+        report_fh.write(json.dumps(json_dic))
 
 
 if __name__ == '__main__':

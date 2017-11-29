@@ -343,7 +343,7 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
         # max_contigs threshold, issue a warning
         logger.debug("Checking number of contigs: {}".format(
                 len(coverage_info)))
-        if ncontigs > max_contigs:
+        if ncontigs > max_contigs * genome_size / 1.5:
             warn_msg = "The number of contigs ({}) exceeds the threshold of " \
                        "100 contigs per 1.5Mb".format(ncontigs)
             logger.warning(warn_msg)
@@ -363,7 +363,10 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
             health = False
 
         json_dic = {
-            "warnings": warnings
+            "warnings": {
+                "process": "Assembly mapping",
+                "value": warnings
+            }
         }
         json_report.write(json.dumps(json_dic))
 

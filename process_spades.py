@@ -513,20 +513,11 @@ def main(fastq_id, assembly_file, gsize, opts):
     spades_assembly.write_report(output_report)
     # Write json report
     with open(".report.json", "w") as json_report:
-        # size_dist = [x["length"] for x in spades_assembly.contigs.values()]
-        # cov_dist = [x["kmer_cov"] for x in spades_assembly.contigs.values()]
         json_dic = {
-            # {"table-row": {
-            #     "header": "contigs",
-            #     "value": len(spades_assembly.contigs),
-            #     "column-bar": True}},
-            # {"table-row": {
-            #     "header": "assembled bp",
-            #     "value": assembly_len,
-            #     "column-bar": True}},
-            # {"plot-data": {"size_dist": size_dist,
-            #                "cov_size": cov_dist}},
-            "warnings": warnings
+            "warnings": {
+                "process": "Spades",
+                "value": warnings
+            }
         }
         json_report.write(json.dumps(json_dic))
 
