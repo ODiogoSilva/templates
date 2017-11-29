@@ -154,14 +154,14 @@ def write_json_report(data1, data2):
     }
 
     json_dic = {
-        "plot-data": [
-            {"base_sequence_quality": {"status": None, "data": []}},
-            {"sequence_quality": {"status": None, "data": []}},
-            {"base_gc_content": {"status": None, "data": []}},
-            {"base_n_content": {"status": None, "data": []}},
-            {"sequence_length_dist": {"status": None, "data": []}},
-            {"per_base_sequence_content": {"status": None, "data": []}}
-        ]
+        "plot-data": {
+            "base_sequence_quality": {"status": None, "data": []},
+            "sequence_quality": {"status": None, "data": []},
+            "base_gc_content": {"status": None, "data": []},
+            "base_n_content": {"status": None, "data": []},
+            "sequence_length_dist": {"status": None, "data": []},
+            "per_base_sequence_content": {"status": None, "data": []}
+        }
     }
 
     for cat, start_str in parser_map.items():
