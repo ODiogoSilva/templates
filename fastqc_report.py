@@ -544,6 +544,7 @@ def main(fastq_id, result_p1, result_p2, opts):
     """
 
     logger.info("Starting fastqc report")
+    json_dic = None
 
     with open("{}_trim_report".format(fastq_id), "w") as trep_fh, \
             open("optimal_trim", "w") as trim_fh, \
@@ -617,7 +618,11 @@ def main(fastq_id, result_p1, result_p2, opts):
         trep_fh.write("{},{},{}\\n".format(fastq_id, optimal_trim[0],
                                            optimal_trim[1]))
 
-        report_fh.write(json.dumps(json_dic))
+        # The json dict report is only populated when the FastQC quality
+        # checks are performed, that is, when the --ignore-tests option
+        # is not provide
+        if json_dic:
+            report_fh.write(json.dumps(json_dic))
 
 
 if __name__ == '__main__':
