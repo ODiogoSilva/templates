@@ -364,12 +364,13 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
 
             health = False
 
-        json_dic = {
-            "warnings": {
-                "process": "Assembly mapping",
-                "value": warnings
+        if warnings:
+            json_dic = {
+                "warnings": {
+                    "process": "Assembly mapping",
+                    "value": warnings
+                }
             }
-        }
         json_report.write(json.dumps(json_dic))
 
     return health
