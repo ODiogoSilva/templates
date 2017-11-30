@@ -439,7 +439,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
                 }
             else:
                 json_dic = {
-                    "table_row": [
+                    "table-row": [
                         {"header": "coverage (2nd)",
                          "value": exp_coverage,
                          "table-row": True,
