@@ -343,9 +343,11 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
         # max_contigs threshold, issue a warning
         logger.debug("Checking number of contigs: {}".format(
                 len(coverage_info)))
-        if ncontigs > max_contigs * genome_size / 1.5:
+        contig_threshold = max_contigs * genome_size / 1.5
+        if ncontigs > contig_threshold:
             warn_msg = "The number of contigs ({}) exceeds the threshold of " \
-                       "100 contigs per 1.5Mb".format(ncontigs)
+                       "100 contigs per 1.5Mb: {}".format(
+                            ncontigs, contig_threshold)
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
             warnings.append("excessive_contigs:high")
