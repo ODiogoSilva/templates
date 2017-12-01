@@ -370,6 +370,39 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             # End of FastQ parsing
             logger.info("Finished FastQ file parsing")
 
+            # The minimum expected coverage for a sample to pass
+            exp_coverage = round(chars / (gsize * 1e6), 2)
+
+            # Set json report
+            if "-e" not in opts:
+                json_dic = {
+                    "table-row": [
+                        {"header": "bp",
+                         "value": chars,
+                         "table-row": True,
+                         "column-bar": True},
+                        {"header": "reads",
+                         "value": nreads,
+                         "table-row": True,
+                         "column-bar": True},
+                        {"header": "coverage (1st)",
+                         "value": exp_coverage,
+                         "table-row": True,
+                         "column-bar": True}
+                    ],
+                    "min_coverage": minimum_coverage
+                }
+            else:
+                json_dic = {
+                    "table-row": [
+                        {"header": "coverage (2nd)",
+                         "value": exp_coverage,
+                         "table-row": True,
+                         "column-bar": True},
+                    ],
+                    "min_coverage": minimum_coverage
+                }
+
             # Get encoding
             if len(encoding) > 1:
                 encoding = set(encoding)
@@ -394,7 +427,6 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             # Estimate coverage
             logger.info("Estimating coverage based on a genome size of "
                         "{}".format(gsize))
-            exp_coverage = round(chars / (gsize * 1e6), 2)
             logger.info("Expected coverage is {}".format(exp_coverage))
 
             if exp_coverage >= minimum_coverage:
@@ -404,50 +436,19 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
                 status_fh.write("pass")
             # Estimated coverage does not pass minimum threshold
             else:
-                logger.error(
-                    "Expected coverage is lower than the defined "
-                    "minimum threshold: {}".format(minimum_coverage))
-                cov_rep.write("{},{},{}\\n".format(
-                    fastq_id, str(exp_coverage), "FAIL"))
+                fail_msg = "Sample with low coverage ({}), below the {} " \
+                           "threshold".format(exp_coverage, minimum_coverage)
+                logger.error(fail_msg)
+                fail_fh.write(fail_msg)
                 cov_fh.write("fail")
                 status_fh.write("fail")
-                fail_fh.write("Sample with low coverage ({}), below the {}"
-                              " threshold".format(exp_coverage,
-                                                  minimum_coverage))
+                cov_rep.write("{},{},{}\\n".format(
+                    fastq_id, str(exp_coverage), "FAIL"))
+                json_dic["fail"] = fail_msg
 
+            json_report.write(json.dumps(json_dic))
             # Maximum read length
             len_fh.write("{}".format(max_read_length))
-
-            # Set json report
-            if "-e" not in opts:
-                json_dic = {
-                    "table-row": [
-                        {"header": "bp",
-                         "value": chars,
-                         "table-row": True,
-                         "column-bar": True},
-                        {"header": "reads",
-                         "value": nreads,
-                         "table-row": True,
-                         "column-bar": True},
-                        {"header": "coverage (1st)",
-                         "value": exp_coverage,
-                         "table-row": True,
-                         "column-bar": True}
-                        ],
-                    "min_coverage": minimum_coverage
-                }
-            else:
-                json_dic = {
-                    "table-row": [
-                        {"header": "coverage (2nd)",
-                         "value": exp_coverage,
-                         "table-row": True,
-                         "column-bar": True},
-                    ],
-                    "min_coverage": minimum_coverage
-                }
-            json_report.write(json.dumps(json_dic))
 
         # This exception is raised when the input FastQ files are corrupted
         except EOFError:

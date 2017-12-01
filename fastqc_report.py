@@ -544,7 +544,7 @@ def main(fastq_id, result_p1, result_p2, opts):
     """
 
     logger.info("Starting fastqc report")
-    json_dic = None
+    json_dic = {}
 
     with open("{}_trim_report".format(fastq_id), "w") as trep_fh, \
             open("optimal_trim", "w") as trim_fh, \
@@ -593,14 +593,15 @@ def main(fastq_id, result_p1, result_p2, opts):
                 # If one of the health flags returns False, send the summary
                 # report through the status channel
                 if not health:
-                    logger.warning("Sample failed quality control checks")
+                    fail_msg = "Sample failed quality control checks:" \
+                               " {}".format(",".join(f_cat))
+                    logger.warning(fail_msg)
+                    fail_fh.write(fail_msg)
+                    json_dic["fail"] = fail_msg
                     status_fh.write("fail")
                     trim_fh.write("fail")
-                    fail_fh.write("Sample failed quality control checks:"
-                                  " {}".format(",".join(f_cat)))
                     rep_fh.write("{}, {}\\n".format(fastq_id, ",".join(f_cat)))
                     trep_fh.write("{},fail,fail\\n".format(fastq_id))
-
                     return
 
             logger.info("Sample passed quality control checks")
