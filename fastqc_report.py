@@ -623,7 +623,7 @@ def main(fastq_id, result_p1, result_p2, opts):
         # checks are performed, that is, when the --ignore-tests option
         # is not provide
         if json_dic:
-            report_fh.write(json.dumps(json_dic))
+            report_fh.write(json.dumps(json_dic, separators=(",", ":")))
 
 
 if __name__ == '__main__':

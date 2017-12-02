@@ -446,7 +446,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
                     fastq_id, str(exp_coverage), "FAIL"))
                 json_dic["fail"] = fail_msg
 
-            json_report.write(json.dumps(json_dic))
+            json_report.write(json.dumps(json_dic, separators=(",", ":")))
             # Maximum read length
             len_fh.write("{}".format(max_read_length))
 

@@ -371,7 +371,7 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
                     "value": warnings
                 }
             }
-            json_report.write(json.dumps(json_dic))
+            json_report.write(json.dumps(json_dic, separators=(",", ":")))
 
     return health
 

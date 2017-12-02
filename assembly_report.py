@@ -267,7 +267,7 @@ def main(fastq_id, assembly_file):
                 "size_dist": size_dist
             }
         }
-        json_report.write(json.dumps(json_dic))
+        json_report.write(json.dumps(json_dic, separators=(",", ":")))
 
     with open(".status", "w") as status_fh:
         status_fh.write("pass")
