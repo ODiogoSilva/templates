@@ -252,10 +252,16 @@ class Assembly:
         return gc / length
 
     def get_gc_sliding(self, window=100):
-        """
+        """Calculates a sliding window of the GC content for the assembly
+
 
         Returns
         -------
+        x : list
+            List of GC proportion floats for each data point in the sliding
+            window
+        y: list
+            List of labels for each data point
 
         """
 
