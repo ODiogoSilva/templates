@@ -154,7 +154,7 @@ def write_json_report(data1, data2):
     }
 
     json_dic = {
-        "plot-data": {
+        "plotData": {
             "base_sequence_quality": {"status": None, "data": []},
             "sequence_quality": {"status": None, "data": []},
             "base_gc_content": {"status": None, "data": []},
@@ -183,8 +183,8 @@ def write_json_report(data1, data2):
             if i in [status1, status2]:
                 status = i
 
-        json_dic["plot-data"][cat]["data"] = [report1, report2]
-        json_dic["plot-data"][cat]["status"] = status
+        json_dic["plotData"][cat]["data"] = [report1, report2]
+        json_dic["plotData"][cat]["status"] = status
 
     return json_dic
 

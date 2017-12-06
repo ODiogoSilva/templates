@@ -372,17 +372,17 @@ def main(fastq_id, assembly_file, coverage_bp_file=None):
 
     size_dist = [len(x) for x in assembly_obj.contigs.values()]
     json_dic = {
-        "table-row": [
+        "tableRow": [
             {"header": "contigs",
              "value": assembly_obj.summary_info["ncontigs"],
-             "table-row": True,
-             "column-bar": True},
+             "tableRow": True,
+             "columnBar": True},
             {"header": "assembled bp",
              "value": assembly_obj.summary_info["total_len"],
-             "table-row": True,
-             "column-bar": True},
+             "tableRow": True,
+             "columnBar": True},
         ],
-        "plot-data": {
+        "plotData": {
             "size_dist": size_dist
         }
     }
@@ -394,8 +394,8 @@ def main(fastq_id, assembly_file, coverage_bp_file=None):
                 coverage_bp_file)
 
             # Add data to json report
-            json_dic["plot-data"]["gcSliding"] = gc_sliding_data
-            json_dic["plot-data"]["covSliding"] = cov_sliding_data
+            json_dic["plotData"]["gcSliding"] = gc_sliding_data
+            json_dic["plotData"]["covSliding"] = cov_sliding_data
 
         except:
             logger.error("Unexpected error creating sliding window data:\\n"

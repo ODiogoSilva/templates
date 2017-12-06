@@ -376,31 +376,31 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             # Set json report
             if "-e" not in opts:
                 json_dic = {
-                    "table-row": [
+                    "tableRow": [
                         {"header": "bp",
                          "value": chars,
-                         "table-row": True,
-                         "column-bar": True},
+                         "tableRow": True,
+                         "columnBar": True},
                         {"header": "reads",
                          "value": nreads,
-                         "table-row": True,
-                         "column-bar": True},
+                         "tableRow": True,
+                         "columnBar": True},
                         {"header": "coverage (1st)",
                          "value": exp_coverage,
-                         "table-row": True,
-                         "column-bar": True}
+                         "tableRow": True,
+                         "columnBar": True}
                     ],
-                    "min_coverage": minimum_coverage
+                    "minCoverage": minimum_coverage
                 }
             else:
                 json_dic = {
-                    "table-row": [
+                    "tableRow": [
                         {"header": "coverage (2nd)",
                          "value": exp_coverage,
-                         "table-row": True,
-                         "column-bar": True},
+                         "tableRow": True,
+                         "columnBar": True},
                     ],
-                    "min_coverage": minimum_coverage
+                    "minCoverage": minimum_coverage
                 }
 
             # Get encoding
