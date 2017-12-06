@@ -307,7 +307,7 @@ class Assembly:
 
                 # Get header
                 header = fields[0]
-                coverage = fields[2]
+                coverage = int(fields[2])
 
                 self.contig_coverage[header] = coverage
 
