@@ -31,8 +31,10 @@ Code documentation
 """
 
 import os
+import re
 import json
 import logging
+import traceback
 
 from collections import OrderedDict
 
@@ -65,8 +67,6 @@ if __file__.endswith(".command.sh"):
 def _log_error():
     """Nextflow specific function that logs an error upon unexpected failing
     """
-
-    import traceback
 
     with open(".status", "w") as status_fh:
         logger.error("Module exited unexpectedly with error:\\n{}".format(
@@ -232,8 +232,51 @@ class Assembly:
                     [str(x) for x in self.summary_info.values()]))
             fh.write(summary_line)
 
+    @staticmethod
+    def _gc_prop(s, length):
+        """Get proportion of GC from a string
 
-def main(fastq_id, assembly_file):
+        Parameters
+        ----------
+        s : str
+            Arbitrary string
+
+        Returns
+        -------
+        x : float
+            GC proportion.
+        """
+
+        gc = sum(map(s.count, ["c", "g"]))
+
+        return gc / length
+
+    def get_gc_sliding(self, window=100):
+        """
+
+        Returns
+        -------
+
+        """
+
+        gc_res = []
+        labels = []
+
+        for header, seq in self.contigs.items():
+
+            contig_id = re.search(".*_NODE_([0-9]*)_.*", header).group(1)
+
+            for i in range(0, len(seq), window):
+
+                seq_window = seq[i:i + window].lower()
+                # Get GC proportion
+                gc_res.append(self._gc_prop(seq_window, window))
+                labels.append("{}_{}".format(contig_id, i))
+
+        return gc_res, labels
+
+
+def main(fastq_id, assembly_file, coverage_bp_file=None):
     """Main executor of the assembly_report template.
 
     Parameters
@@ -271,6 +314,14 @@ def main(fastq_id, assembly_file):
         }
         json_report.write(json.dumps(json_dic, separators=(",", ":")))
 
+    if coverage_bp_file:
+        try:
+            gc_sliding_data = assembly_obj.get_gc_sliding()
+            print(gc_sliding_data)
+        except:
+            logger.error("Unexpected error creating sliding window data:\\n"
+                         "{}".format(traceback.format_exc()))
+
     with open(".status", "w") as status_fh:
         status_fh.write("pass")
 
@@ -278,6 +329,6 @@ def main(fastq_id, assembly_file):
 if __name__ == '__main__':
 
     try:
-        main(FASTQ_ID, ASSEMBLY_FILE)
+        main(FASTQ_ID, ASSEMBLY_FILE, COVERAGE_BP_FILE)
     except Exception as e:
         _log_error()
