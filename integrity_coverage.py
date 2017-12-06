@@ -390,6 +390,9 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
                          "tableRow": True,
                          "columnBar": True}
                     ],
+                    "plotData": {
+                        "sparkline": chars
+                    },
                     "minCoverage": minimum_coverage
                 }
             else:

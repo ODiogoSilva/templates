@@ -161,6 +161,9 @@ def write_report(storage_dic, output_file):
                      "tableRow": True,
                      "columnBar": True},
                     ],
+                "plotData": {
+                    "sparkline": vals["clean_len"]
+                },
                 "badReads": vals["bad_reads"]
             }
             json_rep.write(json.dumps(json_dic, separators=(",", ":")))

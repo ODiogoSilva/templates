@@ -393,9 +393,14 @@ def main(fastq_id, assembly_file, coverage_bp_file=None):
             cov_sliding_data = assembly_obj.get_coverage_sliding(
                 coverage_bp_file)
 
+            # Get total basepairs based on the individual coverage of each
+            # contig bp
+            total_bp = sum(assembly_obj.contig_coverage.values())
+
             # Add data to json report
             json_dic["plotData"]["gcSliding"] = gc_sliding_data
             json_dic["plotData"]["covSliding"] = cov_sliding_data
+            json_dic["plotData"]["sparkline"] = total_bp
 
         except:
             logger.error("Unexpected error creating sliding window data:\\n"
