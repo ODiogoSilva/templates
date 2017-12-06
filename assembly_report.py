@@ -309,7 +309,10 @@ class Assembly:
                 header = fields[0]
                 coverage = int(fields[2])
 
-                self.contig_coverage[header] = coverage
+                if header not in self.contig_coverage:
+                    self.contig_coverage[header] = [coverage]
+                else:
+                    self.contig_coverage[header].append(coverage)
 
     def get_coverage_sliding(self, coverage_file, window=100):
         """
