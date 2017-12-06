@@ -54,10 +54,12 @@ logger.addHandler(ch)
 if __file__.endswith(".command.sh"):
     FASTQ_ID = '$fastq_id'
     ASSEMBLY_FILE = '$assembly'
+    COVERAGE_BP_FILE = '$coverage_bp'
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
     logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
     logger.debug("ASSEMBLY_FILE: {}".format(ASSEMBLY_FILE))
+    logger.debug("COVERAGE_BP_FILE: {}".format(COVERAGE_BP_FILE))
 
 
 def _log_error():
