@@ -395,7 +395,9 @@ def main(fastq_id, assembly_file, coverage_bp_file=None):
 
             # Get total basepairs based on the individual coverage of each
             # contig bp
-            total_bp = sum(assembly_obj.contig_coverage.values())
+            total_bp = sum(
+                [sum(x) for x in assembly_obj.contig_coverage.values()]
+            )
 
             # Add data to json report
             json_dic["plotData"]["gcSliding"] = gc_sliding_data
