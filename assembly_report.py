@@ -338,7 +338,11 @@ class Assembly:
 
         for header, cov_list in self.contig_coverage.items():
 
-            contig_id = re.search(".*_NODE_([0-9]*)_.*", header).group(1)
+            try:
+                contig_id = re.search(".*_NODE_([0-9]*)_.*", header).group(1)
+            except AttributeError:
+                logger.warning("Offending header failed: {}".format(header))
+                continue
 
             for i in range(0, len(cov_list), window):
 
