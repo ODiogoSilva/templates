@@ -21,6 +21,8 @@ The following variables are expected whether using NextFlow or the
     - e.g.: ``'SH10761A.assembly.fasta'``
 - ``coverage`` : TSV file with the average coverage for each assembled contig.
     - e.g.: ``'coverage.tsv'``
+- ``coverage_bp`` : TSV file with the coverage for each assembled bp.
+    - e.g.: ``'coverage.tsv'``
 - ``bam_file`` : BAM file with the alignment of reads to the genome.
     - e.g.: ``'sorted.bam'``
 - ``opts`` : List of options for processing assembly mapping output.
@@ -74,6 +76,7 @@ if __file__.endswith(".command.sh"):
     FASTQ_ID = '$fastq_id'
     ASSEMBLY_FILE = '$assembly'
     COVERAGE_FILE = '$coverage'
+    COVERAGE_BP_FILE = '$coverage_bp'
     BAM_FILE = '$bam_file'
     OPTS = [x.strip() for x in '$opts'.strip("[]").split(",")]
     GSIZE = float('$gsize')
@@ -82,6 +85,7 @@ if __file__.endswith(".command.sh"):
     logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
     logger.debug("ASSEMBLY_FILE: {}".format(ASSEMBLY_FILE))
     logger.debug("COVERAGE_FILE: {}".format(COVERAGE_FILE))
+    logger.debug("COVERAGE_BP_FILE: {}".format(COVERAGE_BP_FILE))
     logger.debug("BAM_FILE: {}".format(BAM_FILE))
     logger.debug("MIN_ASSEMBLY_COVERAGE: {}".format(OPTS))
     logger.debug("GSIZE: {}".format(GSIZE))
@@ -286,8 +290,8 @@ def filter_bam(coverage_info, bam_file, min_coverage, output_bam):
             p.returncode))
 
 
-def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
-                            max_contigs):
+def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
+                            genome_size, max_contigs):
     """Checks whether a filtered assembly passes a size threshold
 
     Given a minimum coverage threshold, this function evaluates whether an
@@ -298,6 +302,10 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
     ----------
     coverage_info : OrderedDict or dict
         Dictionary containing the coverage information for each contig.
+    coverage_bp : dict
+        Dictionary containing the per base coverage information for each
+        contig. Used to determine the total number of base pairs in the
+        final assembly.
     minimum_coverage : int
         Minimum coverage required for a contig to pass the filter.
     genome_size : int
@@ -320,6 +328,11 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
     # Get number of contigs after filtering
     ncontigs = len([x for x in coverage_info.values()
                     if x["cov"] >= minimum_coverage])
+    # Get number of bp after filtering
+    filtered_contigs = [k for k, v in coverage_info.items()
+                        if v["cov"] >= minimum_coverage]
+    assembled_total_bp = sum([sum(coverage_bp[x]) for x in filtered_contigs])
+
     warnings = []
     health = True
 
@@ -361,11 +374,16 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
             warnings.append("small_size:high")
+            assembled_total_bp = sum(
+                [sum(coverage_bp[x]) for x in coverage_info])
 
             health = False
 
         if warnings:
             json_dic = {
+                "plotData": {
+                    "sparkline": assembled_total_bp
+                },
                 "warnings": {
                     "process": "Assembly mapping",
                     "value": warnings
@@ -376,7 +394,73 @@ def check_filtered_assembly(coverage_info, minimum_coverage, genome_size,
     return health
 
 
-def main(fastq_id, assembly_file, coverage_file, bam_file,
+def get_coverage_from_file(coverage_file):
+    """
+
+    Parameters
+    ----------
+    coverage_file
+
+    Returns
+    -------
+
+    """
+
+    contig_coverage = {}
+
+    with open(coverage_file) as fh:
+        for line in fh:
+
+            fields = line.strip().split()
+
+            # Get header
+            header = fields[0]
+            coverage = int(fields[2])
+
+            if header not in contig_coverage:
+                contig_coverage[header] = [coverage]
+            else:
+                contig_coverage[header].append(coverage)
+
+
+def evaluate_min_coverage(coverage_opt, assembly_coverage, assembly_size):
+    """ Evaluates the minimum coverage threshold from the value provided in
+    the coverage_opt.
+
+    Parameters
+    ----------
+    coverage_opt : str or int or float
+        If set to "auto" it will try to automatically determine the coverage
+        to 1/3 of the assembly size, to a minimum value of 10. If it set
+        to a int or float, the specified value will be used.
+
+    Returns
+    -------
+    x: int
+        Minimum coverage threshold.
+
+    """
+
+    if coverage_opt == "auto":
+        # Get the 1/3 value of the current assembly coverage
+        min_coverage = (assembly_coverage / assembly_size) * .3
+        logger.info("Minimum assembly coverage automatically set to: "
+                    "{}".format(min_coverage))
+        # If the 1/3 coverage is lower than 10, change it to the minimum of
+        # 10
+        if min_coverage < 10:
+            logger.info("Minimum assembly coverage cannot be set to lower"
+                        " that 10. Setting to 10")
+            min_coverage = 10
+    else:
+        min_coverage = int(coverage_opt)
+        logger.info("Minimum assembly coverage manually set to: {}".format(
+            min_coverage))
+
+    return min_coverage
+
+
+def main(fastq_id, assembly_file, coverage_file, coverage_bp_file, bam_file,
          opts, gsize):
     """Main executor of the process_assembly_mapping template.
 
@@ -388,6 +472,8 @@ def main(fastq_id, assembly_file, coverage_file, bam_file,
         Path to assembly file in Fasta format.
     coverage_file : str
         Path to TSV file with coverage information for each contig.
+    coverage_bp_file : str
+        Path to TSV file with coverage information for each base.
     bam_file : str
         Path to BAM file.
     opts : list
@@ -406,34 +492,23 @@ def main(fastq_id, assembly_file, coverage_file, bam_file,
     coverage_info, a_size, a_cov = parse_coverage_table(coverage_file)
     logger.info("Assembly processed with a total size of '{}' and coverage"
                 " of '{}'".format(a_size, a_cov))
+    # Get number of assembled bp after filters
+    logger.info("Parsing coverage per bp table")
+    coverage_bp_data = get_coverage_from_file(coverage_bp_file)
 
     # Assess the minimum assembly coverage
-    if min_assembly_coverage == "auto":
-        # Get the 1/3 value of the current assembly coverage
-        min_coverage = (a_cov / a_size) * .3
-        logger.info("Minimum assembly coverage automatically set to: "
-                    "{}".format(min_coverage))
-        # If the 1/3 coverage is lower than 10, change it to the minimum of
-        # 10
-        if min_coverage < 10:
-            logger.info("Minimum assembly coverage cannot be set to lower"
-                        " that 10. Setting to 10")
-            min_coverage = 10
-    else:
-        min_coverage = int(min_assembly_coverage)
-        logger.info("Minimum assembly coverage manually set to: {}".format(
-            min_coverage))
+    min_coverage = evaluate_min_coverage(min_assembly_coverage, a_cov, a_size)
 
     # Check if filtering the assembly using the provided min_coverage will
     # reduce the final bp number to less than 80% of the estimated genome
-    # size.4
+    # size.
     # If the check below passes with True, then the filtered assembly
     # is above the 80% genome size threshold.
     filtered_assembly = "{}_filtered.assembly.fasta".format(fastq_id)
     filtered_bam = "filtered.bam"
     logger.info("Checking filtered assembly")
-    if check_filtered_assembly(coverage_info, min_coverage, gsize,
-                               int(max_contigs)):
+    if check_filtered_assembly(coverage_info, coverage_bp_data, min_coverage,
+                               gsize, int(max_contigs)):
         # Filter assembly contigs based on the minimum coverage.
         logger.info("Filtered assembly passed minimum size threshold")
         logger.info("Writting filtered assembly")
@@ -448,6 +523,9 @@ def main(fastq_id, assembly_file, coverage_file, bam_file,
         shutil.copy(assembly_file, filtered_assembly)
         shutil.copy(bam_file, filtered_bam)
 
+
+
+
     with open(".status", "w") as status_fh:
         status_fh.write("pass")
 
@@ -455,6 +533,7 @@ def main(fastq_id, assembly_file, coverage_file, bam_file,
 if __name__ == '__main__':
 
     try:
-        main(FASTQ_ID, ASSEMBLY_FILE, COVERAGE_FILE, BAM_FILE,OPTS, GSIZE)
+        main(FASTQ_ID, ASSEMBLY_FILE, COVERAGE_FILE, COVERAGE_BP_FILE,
+             BAM_FILE, OPTS, GSIZE)
     except Exception as e:
         _log_error()
