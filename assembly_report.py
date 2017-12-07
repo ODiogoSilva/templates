@@ -282,7 +282,7 @@ class Assembly:
 
                 seq_window = seq[i:i + window].lower()
                 # Get GC proportion
-                gc_res.append(self._gc_prop(seq_window, window))
+                gc_res.append(self._gc_prop(seq_window, len(seq_window)))
                 labels.append("{}_{}".format(contig_id, i))
 
         return gc_res, labels
@@ -350,7 +350,7 @@ class Assembly:
                 cov_window = cov_list[i:i + window]
 
                 # Get mean coverage
-                cov_res.append(sum(cov_window) / window)
+                cov_res.append(sum(cov_window) / len(cov_window))
                 labels.append("{}_{}".format(contig_id, i))
 
         return cov_res, labels
