@@ -422,6 +422,8 @@ def get_coverage_from_file(coverage_file):
             else:
                 contig_coverage[header].append(coverage)
 
+    return contig_coverage
+
 
 def evaluate_min_coverage(coverage_opt, assembly_coverage, assembly_size):
     """ Evaluates the minimum coverage threshold from the value provided in
@@ -522,9 +524,6 @@ def main(fastq_id, assembly_file, coverage_file, coverage_bp_file, bam_file,
     else:
         shutil.copy(assembly_file, filtered_assembly)
         shutil.copy(bam_file, filtered_bam)
-
-
-
 
     with open(".status", "w") as status_fh:
         status_fh.write("pass")
