@@ -126,6 +126,11 @@ class Assembly:
         str: Sample id
         """
 
+        self.contig_boundaries = {}
+        """
+        dict: Maps the boundaries of each contig in the genome
+        """
+
         self._parse_assembly(assembly_file)
 
     def _parse_assembly(self, assembly_file):
@@ -168,7 +173,7 @@ class Assembly:
             self.contigs = OrderedDict(
                 (header, "".join(seq)) for header, seq in self.contigs.items())
 
-    def get_summary_stats(self, output_csv):
+    def get_summary_stats(self, output_csv=None):
         """Generates a CSV report with summary statistics about the assembly
 
         The calculated statistics are:
@@ -230,13 +235,55 @@ class Assembly:
                 self.summary_info["n50"] = l
                 break
 
-        logger.debug("Writing report to csv")
-        # Write summary info to CSV
-        with open(output_csv, "w") as fh:
-            summary_line = "{}, {}\\n".format(
-                self.sample, ",".join(
-                    [str(x) for x in self.summary_info.values()]))
-            fh.write(summary_line)
+        if output_csv:
+            logger.debug("Writing report to csv")
+            # Write summary info to CSV
+            with open(output_csv, "w") as fh:
+                summary_line = "{}, {}\\n".format(
+                    self.sample, ",".join(
+                        [str(x) for x in self.summary_info.values()]))
+                fh.write(summary_line)
+
+    def get_window_labels(self, window):
+        """Returns the mapping between sliding window points and their contigs,
+        and the x-axis position of contig
+
+        Parameters
+        ----------
+        window : int
+            Size of the window.
+
+        Returns
+        -------
+        xbars : list
+            The x-axis position of the ending for each contig.
+        labels : list
+            The x-axis labels for each data point in the sliding window
+
+        """
+
+        # Get summary stats, if they have not yet been triggered
+        if not self.summary_info:
+            self.get_summary_stats()
+
+        # Get contig boundary positon
+        c = 0
+        xbars = []
+        for contig, seq in self.contigs.items():
+            self.contig_boundaries[contig] = [c, c + len(seq)]
+            c += len(seq)
+            xbars.append(c / window)
+
+        # Get label contig for each window
+        labels = []
+        for i in range(0, self.summary_info["total_len"], window):
+            for contig, rg in self.contig_boundaries.items():
+                contig_id = re.search(".*_NODE_([0-9]*)_.*", contig).group(1)
+                if rg[0] <= i < rg[1]:
+                    labels.append("{}_{}".format(contig_id, i))
+                    break
+
+        return labels, xbars
 
     @staticmethod
     def _gc_prop(s, length):
@@ -263,29 +310,32 @@ class Assembly:
 
         Returns
         -------
-        x : list
+        gc_res : list
             List of GC proportion floats for each data point in the sliding
             window
-        y: list
+        labels: list
             List of labels for each data point
+        xbars : list
+            List of the ending position of each contig in the genome
 
         """
 
         gc_res = []
-        labels = []
 
-        for header, seq in self.contigs.items():
+        # Get contigID for each window position
+        labels, xbars = self._get_window_labels(window)
 
-            contig_id = re.search(".*_NODE_([0-9]*)_.*", header).group(1)
+        # Get complete sequence to calculate sliding window values
+        complete_seq = "".join(self.contigs.values()).lower()
 
-            for i in range(0, len(seq), window):
+        for p, i in enumerate(range(0, len(complete_seq), window)):
 
-                seq_window = seq[i:i + window].lower()
-                # Get GC proportion
-                gc_res.append(self._gc_prop(seq_window, len(seq_window)))
-                labels.append("{}_{}".format(contig_id, i))
+            seq_window = complete_seq[i:i + window]
 
-        return gc_res, labels
+            # Get GC proportion
+            gc_res.append(self._gc_prop(seq_window, len(seq_window)))
+
+        return gc_res, labels, xbars
 
     def _get_coverage_from_file(self, coverage_file):
         """
@@ -333,27 +383,22 @@ class Assembly:
         if not self.contig_coverage:
             self._get_coverage_from_file(coverage_file)
 
+        # Get contigID for each window position
+
+
+        # Stores the coverage results
         cov_res = []
-        labels = []
 
-        for header, cov_list in self.contig_coverage.items():
+        # Make flat list of coverage values across genome
+        complete_cov = [x for y in self.contig_coverage.values() for x in y]
 
-            try:
-                contig_id = re.search(".*_NODE_([0-9]*)_.*", header).group(1)
-            except AttributeError:
-                logger.warning("Offending header failed: {}".format(header))
-                continue
+        for i in range(0, len(complete_cov), window):
+            # Get coverage values for current window
+            cov_window = complete_cov[i:i + window]
+            # Get mean coverage
+            cov_res.append(sum(cov_window) / len(cov_window))
 
-            for i in range(0, len(cov_list), window):
-
-                # Get coverage values for current window
-                cov_window = cov_list[i:i + window]
-
-                # Get mean coverage
-                cov_res.append(sum(cov_window) / len(cov_window))
-                labels.append("{}_{}".format(contig_id, i))
-
-        return cov_res, labels
+        return cov_res, labels, xbars
 
 
 def main(fastq_id, assembly_file, coverage_bp_file=None):
@@ -393,9 +438,9 @@ def main(fastq_id, assembly_file, coverage_bp_file=None):
 
     if coverage_bp_file:
         try:
-            gc_sliding_data = assembly_obj.get_gc_sliding()
-            cov_sliding_data = assembly_obj.get_coverage_sliding(
-                coverage_bp_file)
+            gc_sliding_data, gc_label, gc_xbars = assembly_obj.get_gc_sliding()
+            cov_sliding_data, cov_label, cov_xbars = \
+                assembly_obj.get_coverage_sliding(coverage_bp_file)
 
             # Get total basepairs based on the individual coverage of each
             # contig bp
@@ -404,8 +449,10 @@ def main(fastq_id, assembly_file, coverage_bp_file=None):
             )
 
             # Add data to json report
-            json_dic["plotData"]["gcSliding"] = gc_sliding_data
-            json_dic["plotData"]["covSliding"] = cov_sliding_data
+            json_dic["plotData"]["gcSliding"] = \
+                [gc_sliding_data, gc_label, gc_xbars]
+            json_dic["plotData"]["covSliding"] = \
+                [cov_sliding_data, cov_label, cov_xbars]
             json_dic["plotData"]["sparkline"] = total_bp
 
         except:
