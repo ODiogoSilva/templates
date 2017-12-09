@@ -244,7 +244,7 @@ class Assembly:
                         [str(x) for x in self.summary_info.values()]))
                 fh.write(summary_line)
 
-    def get_window_labels(self, window):
+    def _get_window_labels(self, window):
         """Returns the mapping between sliding window points and their contigs,
         and the x-axis position of contig
 
@@ -384,7 +384,7 @@ class Assembly:
             self._get_coverage_from_file(coverage_file)
 
         # Get contigID for each window position
-
+        labels, xbars = self._get_window_labels(window)
 
         # Stores the coverage results
         cov_res = []
