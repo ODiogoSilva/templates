@@ -304,7 +304,7 @@ class Assembly:
 
         return gc / length
 
-    def get_gc_sliding(self, window=2500):
+    def get_gc_sliding(self, window=1500):
         """Calculates a sliding window of the GC content for the assembly
 
 
@@ -364,7 +364,7 @@ class Assembly:
                 else:
                     self.contig_coverage[header].append(coverage)
 
-    def get_coverage_sliding(self, coverage_file, window=2500):
+    def get_coverage_sliding(self, coverage_file, window=1500):
         """
 
         Parameters
