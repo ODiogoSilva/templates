@@ -168,7 +168,7 @@ def write_json_report(data1, data2):
 
         if cat == "per_base_sequence_content":
             fs = 1
-            fe = -1
+            fe = 5
         else:
             fs = 1
             fe = 2
