@@ -379,11 +379,10 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
 
             health = False
 
+        json_dic = {"plotData": {"sparkline": assembled_total_bp}}
+
         if warnings:
-            json_dic = {
-                "plotData": {
-                    "sparkline": assembled_total_bp
-                },
+            json_dic["warnings"] = {
                 "warnings": {
                     "process": "Assembly mapping",
                     "value": warnings
