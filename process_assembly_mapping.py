@@ -383,10 +383,8 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
 
         if warnings:
             json_dic["warnings"] = {
-                "warnings": {
-                    "process": "Assembly mapping",
-                    "value": warnings
-                }
+                "process": "Assembly mapping",
+                "value": warnings
             }
 
         json_report.write(json.dumps(json_dic, separators=(",", ":")))
