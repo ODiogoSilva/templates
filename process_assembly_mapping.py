@@ -388,7 +388,8 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
                     "value": warnings
                 }
             }
-            json_report.write(json.dumps(json_dic, separators=(",", ":")))
+
+        json_report.write(json.dumps(json_dic, separators=(",", ":")))
 
     return health
 
