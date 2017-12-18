@@ -36,10 +36,29 @@ import json
 import logging
 import operator
 
+# create logger
+logger = logging.getLogger(os.path.basename(__file__))
+logger.setLevel(logging.DEBUG)
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+# add formatter to ch
+ch.setFormatter(formatter)
+# add ch to logger
+logger.addHandler(ch)
+
 
 if __file__.endswith(".command.sh"):
     FASTQ_ID = '$fastq_id'
+    DATABASE = '$database'
     ABRICATE_FILE = '$abricate_file'
+    logger.debug("Running {} with parameters:".format(
+        os.path.basename(__file__)))
+    logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
+    logger.debug("DATABASE: {}".format(DATABASE))
+    logger.debug("ABRICATE_FILE: {}".format(ABRICATE_FILE))
 
 
 class Abricate:
@@ -312,7 +331,7 @@ class Abricate:
 
 class AbricateSingleReport(Abricate):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, database=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # Replace the original storage attribute with a single abricate file
@@ -320,7 +339,10 @@ class AbricateSingleReport(Abricate):
         self.storage = list(self.storage.values())[0]
 
         # Get database
-        self.database = list(self.storage.values())[0]["database"]
+        if not database:
+            self.database = list(self.storage.values())[0]["database"]
+        else:
+            self.database = database
 
     def get_plot_data(self):
         """
@@ -366,9 +388,9 @@ class AbricateSingleReport(Abricate):
 
 if __name__ == '__main__':
 
-    def main(fastq_id, abr_file):
+    def main(fastq_id, abr_file, database):
 
-        abr = AbricateSingleReport([abr_file])
+        abr = AbricateSingleReport([abr_file], database=database)
         abr.write_report_data()
 
-    main(FASTQ_ID, ABRICATE_FILE)
+    main(FASTQ_ID, ABRICATE_FILE, DATABASE)
