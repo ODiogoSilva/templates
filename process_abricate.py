@@ -346,7 +346,7 @@ class AbricateSingleReport(Abricate):
         be inferred based on the first entry of the Abricate file.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, database=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # Replace the original storage attribute with a single abricate file
@@ -417,7 +417,7 @@ if __name__ == '__main__':
 
     def main(fastq_id, abr_file, db):
 
-        abr = AbricateSingleReport([abr_file], database=db)
+        abr = AbricateSingleReport(fls=[abr_file], database=db)
         abr.write_report_data()
 
     main(FASTQ_ID, ABRICATE_FILE, DATABASE)
