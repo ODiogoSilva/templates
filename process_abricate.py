@@ -331,7 +331,7 @@ class Abricate:
 
 class AbricateSingleReport(Abricate):
 
-    def __init__(self, database=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # Replace the original storage attribute with a single abricate file
@@ -339,10 +339,10 @@ class AbricateSingleReport(Abricate):
         self.storage = list(self.storage.values())[0]
 
         # Get database
-        if not database:
+        if not kwargs.get("database"):
             self.database = list(self.storage.values())[0]["database"]
         else:
-            self.database = database
+            self.database = kwargs.get("database")
 
     def get_plot_data(self):
         """
@@ -388,9 +388,9 @@ class AbricateSingleReport(Abricate):
 
 if __name__ == '__main__':
 
-    def main(fastq_id, abr_file, database):
+    def main(fastq_id, abr_file, db):
 
-        abr = AbricateSingleReport([abr_file], database=database)
+        abr = AbricateSingleReport([abr_file], database=db)
         abr.write_report_data()
 
     main(FASTQ_ID, ABRICATE_FILE, DATABASE)
