@@ -349,10 +349,6 @@ class AbricateSingleReport(Abricate):
     def __init__(self, database=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Replace the original storage attribute with a single abricate file
-        # storage that uses the first entry.
-        self.storage = list(self.storage.values())[0]
-
         # Get database
         if not database:
             self.database = list(self.storage.values())[0]["database"]
