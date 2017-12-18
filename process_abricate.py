@@ -354,10 +354,10 @@ class AbricateSingleReport(Abricate):
         self.storage = list(self.storage.values())[0]
 
         # Get database
-        if not kwargs.get("database"):
+        if not database:
             self.database = list(self.storage.values())[0]["database"]
         else:
-            self.database = kwargs.get("database")
+            self.database = database
 
     def get_plot_data(self):
         """ Generates the JSON report to plot the gene boxes
