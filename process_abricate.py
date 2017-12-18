@@ -15,13 +15,15 @@ The following variables are expected whether using NextFlow or the
 
 - ``fastq_id`` : Sample Identification string.
     - e.g.: ``'SampleA'``
-- ``abr_file`` : Path to abricate output file.
+- ``abricate_file`` : Path to abricate output file.
     - e.g.: ``'abr_resfinder.tsv'``
+- ``database`` : String identifying the database of the abricate file
+    - e.g.: ``'resfinder'``
 
 Generated output
 ----------------
 
-[Under development]
+None
 
 
 Code documentation
@@ -330,6 +332,19 @@ class Abricate:
 
 
 class AbricateSingleReport(Abricate):
+    """Report generator for single Abricate output files
+
+    This class is intended to parse an Abricate output file from a single
+    sample and database and generates a JSON report for the report webpage.
+
+    Parameters
+    ----------
+    fls : list
+       List of paths to Abricate output files.
+    database : (optional) str
+        Name of the database for the current report. If not provided, it will
+        be inferred based on the first entry of the Abricate file.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -345,11 +360,27 @@ class AbricateSingleReport(Abricate):
             self.database = kwargs.get("database")
 
     def get_plot_data(self):
-        """
+        """ Generates the JSON report to plot the gene boxes
+
+        Following the convention of the reports platform, this method returns
+        a list of JSON/dict objects with the information about each entry in
+        the abricate file. The information contained in this JSON is::
+
+            {contig_id: <str>,
+             seqRange: [<int>, <int>],
+             gene: <str>,
+             accession: <str>,
+             coverage: <float>,
+             identity: <float>
+             }
+
+        Note that the `seqRange` entry contains the position in the
+        corresponding contig, not the absolute position in the whole assembly.
 
         Returns
         -------
-
+        json_dic : list
+            List of JSON/dict objects with the report data.
         """
 
         json_dic = {"plotData":
@@ -373,11 +404,7 @@ class AbricateSingleReport(Abricate):
         return json_dic
 
     def write_report_data(self):
-        """
-
-        Returns
-        -------
-
+        """Writes the JSON report to a json file
         """
 
         json_dic = self.get_plot_data()
