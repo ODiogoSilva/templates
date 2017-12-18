@@ -49,7 +49,7 @@ logger.addHandler(ch)
 
 
 if __file__.endswith(".command.sh"):
-    ABRICATE_FILES = '$abricate_file'
+    ABRICATE_FILES = '$abricate_file'.split()
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
     logger.debug("ABRICATE_FILE: {}".format(ABRICATE_FILES))
@@ -380,7 +380,7 @@ class AbricateReport(Abricate):
             json_dic["plotData"][database].append(
                 {"contig": contig_id,
                  "seqRange": entry["seq_range"],
-                 "gene": entry["gene"],
+                 "gene": entry["gene"].replace("'", ""),
                  "accession": entry["accession"],
                  "coverage": entry["coverage"],
                  "identity": entry["identity"]}
