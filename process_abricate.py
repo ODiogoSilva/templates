@@ -30,7 +30,9 @@ Code documentation
 """
 
 
+import re
 import os
+import json
 import logging
 import operator
 
@@ -63,7 +65,8 @@ class Abricate:
         
             - ``infile``: Input file of Abricate.
             - ``reference``: Reference of the query sequence.
-            - ``seq_range``: Range of the query sequence in the database sequence.
+            - ``seq_range``: Range of the query sequence in the database
+             sequence.
             - ``gene``: AMR gene name.
             - ``accession``: The genomic source of the sequence.
             - ``database``: The database the sequence came from.
@@ -307,21 +310,65 @@ class Abricate:
         return list(self.iter_filter(*args, **kwargs))
 
 
+class AbricateSingleReport(Abricate):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Replace the original storage attribute with a single abricate file
+        # storage that uses the first entry.
+        self.storage = list(self.storage.values())[0]
+
+        # Get database
+        self.database = list(self.storage.values())[0]["database"]
+
+    def get_plot_data(self):
+        """
+
+        Returns
+        -------
+
+        """
+
+        json_dic = {"plotData":
+                        {self.database: []}
+                    }
+
+        for key, entry in self.storage.items():
+            # Get contig ID using the same regex as in `assembly_report.py`
+            # template
+            contig_id = re.search(
+                ".*_NODE_([0-9]*)_.*", entry["reference"]).group(1)
+            json_dic["plotData"][self.database].append(
+                {"contig": contig_id,
+                 "seqRange": entry["seq_range"],
+                 "gene": entry["gene"],
+                 "accession": entry["accession"],
+                 "coverage": entry["coverage"],
+                 "identity": entry["identity"]}
+            )
+
+        return json_dic
+
+    def write_report_data(self):
+        """
+
+        Returns
+        -------
+
+        """
+
+        json_dic = self.get_plot_data()
+
+        with open(".report.json", "w") as json_report:
+            json_report.write(json.dumps(json_dic, separators=(",", ":")))
+
+
 if __name__ == '__main__':
 
     def main(fastq_id, abr_file):
 
-        abr = Abricate([abr_file])
+        abr = AbricateSingleReport([abr_file])
+        abr.write_report_data()
 
     main(FASTQ_ID, ABRICATE_FILE)
-
-    # abr = Abricate(["/home/diogosilva/Diogo/Science/IMM/Github_issues/abricate_parser/master_fasta_abr.card.txt"])
-    #
-    # filters = [
-    #     ["coverage", ">=", 80],
-    #     ["identity", ">=", 70]
-    # ]
-    #
-    # for i in abr.iter_filter(filters, fields=["coverage", "identity"],
-    #                          filter_behavior="ord"):
-    #     print(i)
