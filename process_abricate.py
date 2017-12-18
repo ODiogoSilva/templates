@@ -13,12 +13,8 @@ Expected input
 The following variables are expected whether using NextFlow or the
 :py:func:`main` executor.
 
-- ``fastq_id`` : Sample Identification string.
-    - e.g.: ``'SampleA'``
-- ``abricate_file`` : Path to abricate output file.
+- ``abricate_files`` : Path to abricate output file.
     - e.g.: ``'abr_resfinder.tsv'``
-- ``database`` : String identifying the database of the abricate file
-    - e.g.: ``'resfinder'``
 
 Generated output
 ----------------
@@ -53,14 +49,10 @@ logger.addHandler(ch)
 
 
 if __file__.endswith(".command.sh"):
-    FASTQ_ID = '$fastq_id'
-    DATABASE = '$database'
-    ABRICATE_FILE = '$abricate_file'
+    ABRICATE_FILES = '$abricate_file'
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
-    logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
-    logger.debug("DATABASE: {}".format(DATABASE))
-    logger.debug("ABRICATE_FILE: {}".format(ABRICATE_FILE))
+    logger.debug("ABRICATE_FILE: {}".format(ABRICATE_FILES))
 
 
 class Abricate:
@@ -331,7 +323,7 @@ class Abricate:
         return list(self.iter_filter(*args, **kwargs))
 
 
-class AbricateSingleReport(Abricate):
+class AbricateReport(Abricate):
     """Report generator for single Abricate output files
 
     This class is intended to parse an Abricate output file from a single
@@ -346,14 +338,8 @@ class AbricateSingleReport(Abricate):
         be inferred based on the first entry of the Abricate file.
     """
 
-    def __init__(self, database=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # Get database
-        if not database:
-            self.database = list(self.storage.values())[0]["database"]
-        else:
-            self.database = database
 
     def get_plot_data(self):
         """ Generates the JSON report to plot the gene boxes
@@ -379,16 +365,19 @@ class AbricateSingleReport(Abricate):
             List of JSON/dict objects with the report data.
         """
 
-        json_dic = {"plotData":
-                        {self.database: []}
-                    }
+        json_dic = {"plotData": {}}
 
         for key, entry in self.storage.items():
             # Get contig ID using the same regex as in `assembly_report.py`
             # template
             contig_id = re.search(
                 ".*_NODE_([0-9]*)_.*", entry["reference"]).group(1)
-            json_dic["plotData"][self.database].append(
+            # Get database
+            database = entry["database"]
+            if database not in json_dic["plotData"]:
+                json_dic["plotData"][database] = []
+
+            json_dic["plotData"][database].append(
                 {"contig": contig_id,
                  "seqRange": entry["seq_range"],
                  "gene": entry["gene"],
@@ -411,9 +400,9 @@ class AbricateSingleReport(Abricate):
 
 if __name__ == '__main__':
 
-    def main(fastq_id, abr_file, db):
+    def main(abr_file):
 
-        abr = AbricateSingleReport(fls=[abr_file], database=db)
+        abr = AbricateReport(fls=[abr_file])
         abr.write_report_data()
 
-    main(FASTQ_ID, ABRICATE_FILE, DATABASE)
+    main(ABRICATE_FILES)
