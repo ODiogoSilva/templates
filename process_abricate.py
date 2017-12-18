@@ -402,7 +402,7 @@ if __name__ == '__main__':
 
     def main(abr_file):
 
-        abr = AbricateReport(fls=[abr_file])
+        abr = AbricateReport(fls=abr_file)
         abr.write_report_data()
 
     main(ABRICATE_FILES)
