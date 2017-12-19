@@ -270,11 +270,12 @@ class Assembly:
         c = 0
         xbars = []
         for contig, seq in self.contigs.items():
-            self.contig_boundaries[contig] = [c, c + len(seq)]
+            contig_id = re.search(".*_NODE_([0-9]*)_.*", contig).group(1)
+            self.contig_boundaries[contig_id] = [c, c + len(seq)]
             c += len(seq)
             xbars.append(
                 {
-                    "contig": contig,
+                    "contig": contig_id,
                     "position": c / window,
                     "absPosition": c
                 }
