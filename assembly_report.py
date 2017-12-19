@@ -285,9 +285,8 @@ class Assembly:
         labels = []
         for i in range(0, self.summary_info["total_len"], window):
             for contig, rg in self.contig_boundaries.items():
-                contig_id = re.search(".*_NODE_([0-9]*)_.*", contig).group(1)
                 if rg[0] <= i < rg[1]:
-                    labels.append("{}_{}".format(contig_id, i))
+                    labels.append("{}_{}".format(contig, i))
                     break
 
         return labels, xbars
