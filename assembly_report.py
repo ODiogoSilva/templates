@@ -277,7 +277,8 @@ class Assembly:
                 {
                     "contig": contig_id,
                     "position": c / window,
-                    "absPosition": c
+                    "absPosition": c,
+                    "window": window
                 }
             )
 
