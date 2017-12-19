@@ -272,7 +272,13 @@ class Assembly:
         for contig, seq in self.contigs.items():
             self.contig_boundaries[contig] = [c, c + len(seq)]
             c += len(seq)
-            xbars.append({"contig": contig, "position": c / window})
+            xbars.append(
+                {
+                    "contig": contig,
+                    "position": c / window,
+                    "absPosition": c
+                }
+            )
 
         # Get label contig for each window
         labels = []
