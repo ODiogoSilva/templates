@@ -379,15 +379,15 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
                     "tableRow": [
                         {"header": "bp",
                          "value": chars,
-                         "tableRow": True,
+                         "table": "assembly",
                          "columnBar": True},
                         {"header": "reads",
                          "value": nreads,
-                         "tableRow": True,
+                         "table": "assembly",
                          "columnBar": True},
                         {"header": "coverage (1st)",
                          "value": exp_coverage,
-                         "tableRow": True,
+                         "table": "assembly",
                          "columnBar": True}
                     ],
                     "plotData": {
@@ -400,7 +400,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
                     "tableRow": [
                         {"header": "coverage (2nd)",
                          "value": exp_coverage,
-                         "tableRow": True,
+                         "table": "assembly",
                          "columnBar": True},
                     ],
                     "minCoverage": minimum_coverage

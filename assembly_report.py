@@ -431,11 +431,11 @@ def main(fastq_id, assembly_file, coverage_bp_file=None):
         "tableRow": [
             {"header": "contigs",
              "value": assembly_obj.summary_info["ncontigs"],
-             "tableRow": True,
+             "table": "assembly",
              "columnBar": True},
             {"header": "assembled bp",
              "value": assembly_obj.summary_info["total_len"],
-             "tableRow": True,
+             "table": "assembly",
              "columnBar": True},
         ],
         "plotData": {
