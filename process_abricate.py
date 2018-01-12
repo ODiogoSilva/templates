@@ -405,7 +405,8 @@ class AbricateReport(Abricate):
         for key, entry in self.storage.items():
 
             database = entry["database"]
-            gene_storage[database].append(entry["gene"])
+            gene_storage[database].append(entry["gene"].replace("'", "").
+                                          replace('"', ''))
 
         # For each database, create the JSON report
         for db, gene_list in gene_storage.items():
