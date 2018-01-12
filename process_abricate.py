@@ -34,6 +34,8 @@ import json
 import logging
 import operator
 
+from collections import defaultdict
+
 # create logger
 logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)
@@ -388,11 +390,44 @@ class AbricateReport(Abricate):
 
         return json_dic
 
+    def get_table_data(self):
+        """
+
+        Returns
+        -------
+
+        """
+
+        gene_storage = defaultdict(list)
+        json_dic = {"tableRow": []}
+
+        # Collect the gene lists for each database
+        for key, entry in self.storage.items():
+
+            database = entry["database"]
+            gene_storage[database].append(entry["gene"])
+
+        # For each database, create the JSON report
+        for db, gene_list in gene_storage.items():
+
+            ind_json = {
+                "table": "abricate",
+                "header": db,
+                "value": len(gene_list),
+                "geneList": gene_list
+            }
+            json_dic["tableRow"].append(ind_json)
+
+        return json_dic
+
     def write_report_data(self):
         """Writes the JSON report to a json file
         """
 
-        json_dic = self.get_plot_data()
+        json_plot = self.get_plot_data()
+        json_table = self.get_table_data()
+
+        json_dic = {**json_plot, **json_table}
 
         with open(".report.json", "w") as json_report:
             json_report.write(json.dumps(json_dic, separators=(",", ":")))
