@@ -32,6 +32,10 @@ Code documentation
 
 """
 
+__version__ = "1.0.0"
+__build__ = "16012018"
+__template__ = "fastqc-nf"
+
 import os
 import json
 import logging
@@ -39,10 +43,6 @@ import subprocess
 
 from subprocess import PIPE
 from os.path import exists, join
-
-__version__ = "1.0.0"
-__build__ = "16012018"
-__template__ = "fastqc-nf"
 
 # create logger
 logger = logging.getLogger(os.path.basename(__file__))
