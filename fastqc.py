@@ -62,7 +62,7 @@ def build_versions():
 
     def get_fastqc_version():
 
-        cli = ["fastqc", "--vesion"]
+        cli = ["fastqc", "--version"]
         p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
         stdout, _ = p.communicate()
 
@@ -260,6 +260,7 @@ def main(fastq_pair, adapter_file, cpus):
 if __name__ == "__main__":
 
     try:
+        build_versions()
         main(FASTQ_PAIR, ADAPTER_FILE, CPUS)
     except Exception:
         _log_error()
