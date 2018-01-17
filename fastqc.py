@@ -260,6 +260,7 @@ def main(fastq_pair, adapter_file, cpus):
 if __name__ == "__main__":
 
     try:
+        build_versions()
         main(FASTQ_PAIR, ADAPTER_FILE, CPUS)
     except Exception:
         _log_error()
