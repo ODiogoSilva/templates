@@ -33,12 +33,16 @@ Code documentation
 """
 
 import os
+import json
 import logging
 import subprocess
 
 from subprocess import PIPE
 from os.path import exists, join
 
+__version__ = "1.0.0"
+__build__ = "16012018"
+__template__ = "fastqc"
 
 # create logger
 logger = logging.getLogger(os.path.basename(__file__))
@@ -52,6 +56,31 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 ch.setFormatter(formatter)
 # add ch to logger
 logger.addHandler(ch)
+
+
+def build_versions():
+
+    def get_fastqc_version():
+
+        cli = ["fastqc", "--vesion"]
+        p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+        stdout, _ = p.communicate()
+
+        version = stdout.strip().split()[1][1:].decode("utf8")
+
+        return {
+            "program": "FastQC",
+            "version": version,
+        }
+
+    ver = [{
+        "program": __template__,
+        "version": __version__,
+        "build": __build__
+    }, get_fastqc_version()]
+
+    with open(".versions", "w") as fh:
+        fh.write(json.dumps(ver, separators=(",", ":")))
 
 
 if __file__.endswith(".command.sh"):
