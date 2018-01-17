@@ -39,8 +39,10 @@ import re
 import json
 import logging
 import traceback
+import subprocess
 
 from collections import OrderedDict
+from subprocess import PIPE
 
 
 # create logger
@@ -60,11 +62,32 @@ logger.addHandler(ch)
 def build_versions():
     logger.debug("Checking module versions")
 
+    def get_pilon_version():
+
+        pilon_path = "/NGStools/pilon-1.22.jar"
+
+        try:
+
+            cli = ["java", "-jar", pilon_path , "--version"]
+            p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+            stdout, _ = p.communicate()
+
+            version = stdout.split()[2].decode("utf8")
+
+        except Exception as e:
+            logger.debug(e)
+            version = "undefined"
+
+        return {
+            "program": "Pilon",
+            "version": version,
+        }
+
     ver = [{
         "program": __template__,
         "version": __version__,
         "build": __build__
-    }]
+    }, get_pilon_version()]
     logger.debug("Versions list set to: {}".format(ver))
 
     with open(".versions", "w") as fh:
