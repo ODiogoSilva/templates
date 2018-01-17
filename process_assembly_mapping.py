@@ -47,6 +47,10 @@ Code documentation
 
 """
 
+__version__ = "1.0.0"
+__build__ = "16012018"
+__template__ = "process_assembly_mapping-nf"
+
 import os
 import re
 import json
@@ -70,6 +74,54 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 ch.setFormatter(formatter)
 # add ch to logger
 logger.addHandler(ch)
+
+
+def build_versions():
+    logger.debug("Checking module versions")
+
+    def get_samtools_version():
+
+        try:
+            cli = ["samtools", "--version"]
+            p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+            stdout = p.communicate()[0]
+
+            version = stdout.splitlines()[0].split()[1].decode("utf8")
+        except Exception as e:
+            logger.debug(e)
+            version = "undefined"
+
+        return {
+            "program": "Samtools",
+            "version": version
+        }
+
+    def get_bowtie2_version():
+
+        try:
+            cli = ["bowtie2", "--version"]
+            p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+            stdout = p.communicate()[0]
+
+            version = stdout.splitlines()[0].split()[-1].decode("utf8")
+        except Exception as e:
+            logger.debug(e)
+            version = "undefined"
+
+        return {
+            "program": "Bowtie2",
+            "version": version
+        }
+
+    ver = [{
+        "program": __template__,
+        "version": __version__,
+        "build": __build__
+    }, get_samtools_version(), get_bowtie2_version()]
+    logger.debug("Versions list set to: {}".format(ver))
+
+    with open(".versions", "w") as fh:
+        fh.write(json.dumps(ver, separators=(",", ":")))
 
 
 if __file__.endswith(".command.sh"):
@@ -535,6 +587,7 @@ def main(fastq_id, assembly_file, coverage_file, coverage_bp_file, bam_file,
 if __name__ == '__main__':
 
     try:
+        build_versions()
         main(FASTQ_ID, ASSEMBLY_FILE, COVERAGE_FILE, COVERAGE_BP_FILE,
              BAM_FILE, OPTS, GSIZE)
     except Exception as e:
