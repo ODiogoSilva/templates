@@ -483,6 +483,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
 if __name__ == "__main__":
 
     try:
+        build_versions()
         main(FASTQ_ID, FASTQ_PAIR, GSIZE, MINIMUM_COVERAGE, OPTS)
     except Exception:
         _log_error()
