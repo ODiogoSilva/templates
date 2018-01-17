@@ -74,6 +74,10 @@ Code documentation
 
 """
 
+__version__ = "1.0.0"
+__build__ = "16012018"
+__template__ = "Integrity Coverage"
+
 import os
 import bz2
 import gzip
@@ -95,6 +99,18 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 ch.setFormatter(formatter)
 # add ch to logger
 logger.addHandler(ch)
+
+
+def build_versions():
+
+    ver = [{
+        "program": __template__,
+        "version": __version__,
+        "build": __build__
+    }]
+
+    with open(".versions", "w") as fh:
+        fh.write(json.dumps(ver, separators=(",", ":")))
 
 
 # Set constants when running from Nextflow
