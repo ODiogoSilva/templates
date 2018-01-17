@@ -41,7 +41,12 @@ Code documentation
 
 """
 
+__version__ = "1.0.0"
+__build__ = "16012018"
+__template__ = "spades-nf"
+
 import os
+import json
 import logging
 import subprocess
 
@@ -60,6 +65,40 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 ch.setFormatter(formatter)
 # add ch to logger
 logger.addHandler(ch)
+
+
+def build_versions():
+
+    def get_spades_version():
+
+        try:
+
+            cli = ["spades.py", "--version"]
+            p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+            stdout, _ = p.communicate()
+
+            version = stdout.strip().split()[-1][1:].decode("utf8")
+
+        except Exception as e:
+            logger.debug(e)
+            version = "undefined"
+
+        return {
+            "program": "SPAdes",
+            "version": version,
+        }
+
+    logger.debug("Checking module versions")
+
+    ver = [{
+        "program": __template__,
+        "version": __version__,
+        "build": __build__
+    }, get_spades_version()]
+    logger.debug("Versions list set to: {}".format(ver))
+
+    with open(".versions", "w") as fh:
+        fh.write(json.dumps(ver, separators=(",", ":")))
 
 
 if __file__.endswith(".command.sh"):
@@ -223,6 +262,7 @@ def main(fastq_id, fastq_pair, max_len, kmer, opts):
 if __name__ == '__main__':
 
     try:
+        build_versions()
         main(FASTQ_ID, FASTQ_PAIR, MAX_LEN, KMERS, OPTS)
     except:
         _log_error()
