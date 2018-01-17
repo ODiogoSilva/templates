@@ -42,7 +42,7 @@ from os.path import exists, join
 
 __version__ = "1.0.0"
 __build__ = "16012018"
-__template__ = "fastqc"
+__template__ = "fastqc-nf"
 
 # create logger
 logger = logging.getLogger(os.path.basename(__file__))
@@ -62,22 +62,31 @@ def build_versions():
 
     def get_fastqc_version():
 
-        cli = ["fastqc", "--version"]
-        p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
-        stdout, _ = p.communicate()
+        try:
 
-        version = stdout.strip().split()[1][1:].decode("utf8")
+            cli = ["fastqc", "--version"]
+            p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+            stdout, _ = p.communicate()
+
+            version = stdout.strip().split()[1][1:].decode("utf8")
+
+        except Exception as e:
+            logger.debug(e)
+            version = "undefined"
 
         return {
             "program": "FastQC",
             "version": version,
         }
 
+    logger.debug("Checking module versions")
+
     ver = [{
         "program": __template__,
         "version": __version__,
         "build": __build__
     }, get_fastqc_version()]
+    logger.debug("Versions list set to: {}".format(ver))
 
     with open(".versions", "w") as fh:
         fh.write(json.dumps(ver, separators=(",", ":")))
