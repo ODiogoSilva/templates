@@ -647,6 +647,7 @@ def main(fastq_id, result_p1, result_p2, opts):
 if __name__ == '__main__':
 
     try:
+        build_versions()
         main(FASTQ_ID, RESULT_P1, RESULT_P2, OPTS)
     except:
         _log_error()
