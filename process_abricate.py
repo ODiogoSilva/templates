@@ -36,7 +36,9 @@ import os
 import json
 import logging
 import operator
+import subprocess
 
+from subprocess import PIPE
 from collections import defaultdict
 
 # create logger
@@ -56,11 +58,46 @@ logger.addHandler(ch)
 def build_versions():
     logger.debug("Checking module versions")
 
+    def get_abricate_version():
+
+        try:
+
+            # Get abricate version
+            cli = ["abricate", "--version"]
+            p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+            stdout, _ = p.communicate()
+
+            version = stdout.strip().split()[-1].decode("utf8")
+
+        except Exception as e:
+            logger.debug(e)
+            version = "undefined"
+
+        try:
+
+            # Get abricate database versions
+            cli = ["abricate", "--list"]
+            p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+            dbout, _ = p.communicate()
+
+            databases = [[u.decode("utf8") for u in i.strip().split()]
+                         for i in dbout.splitlines()][1:]
+
+        except Exception as e:
+            logger.debug(e)
+            databases = "undefined"
+
+        return {
+            "program": "abricate",
+            "version": version,
+            "databases": databases
+        }
+
     ver = [{
         "program": __template__,
         "version": __version__,
         "build": __build__
-    }]
+    }, get_abricate_version()]
     logger.debug("Versions list set to: {}".format(ver))
 
     with open(".versions", "w") as fh:
