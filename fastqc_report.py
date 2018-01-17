@@ -49,6 +49,10 @@ Code documentation
 
 """
 
+__version__ = "1.0.0"
+__build__ = "16012018"
+__template__ = "fastqc_report-nf"
+
 import os
 import json
 import logging
@@ -68,6 +72,20 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 ch.setFormatter(formatter)
 # add ch to logger
 logger.addHandler(ch)
+
+
+def build_versions():
+    logger.debug("Checking module versions")
+
+    ver = [{
+        "program": __template__,
+        "version": __version__,
+        "build": __build__
+    }]
+    logger.debug("Versions list set to: {}".format(ver))
+
+    with open(".versions", "w") as fh:
+        fh.write(json.dumps(ver, separators=(",", ":")))
 
 
 if __file__.endswith(".command.sh"):
