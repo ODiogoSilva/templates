@@ -46,7 +46,12 @@ Code documentation
 # TODO: Add option to remove adapters
 # TODO: What to do when there is encoding failure
 
+__version__ = "1.0.0"
+__build__ = "16012018"
+__template__ = "trimmomatic-nf"
+
 import os
+import json
 import logging
 import subprocess
 
@@ -65,6 +70,40 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 ch.setFormatter(formatter)
 # add ch to logger
 logger.addHandler(ch)
+
+
+def build_versions():
+
+    def get_trimmomatic_version():
+
+        try:
+
+            cli = ["java", "-jar", TRIM_PATH, "-version"]
+            p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+            stdout, _ = p.communicate()
+
+            version = stdout.strip().decode("utf8")
+
+        except Exception as e:
+            logger.debug(e)
+            version = "undefined"
+
+        return {
+            "program": "Trimmomatic",
+            "version": version,
+        }
+
+    logger.debug("Checking module versions")
+
+    ver = [{
+        "program": __template__,
+        "version": __version__,
+        "build": __build__
+    }, get_trimmomatic_version()]
+    logger.debug("Versions list set to: {}".format(ver))
+
+    with open(".versions", "w") as fh:
+        fh.write(json.dumps(ver, separators=(",", ":")))
 
 
 if __file__.endswith(".command.sh"):
@@ -200,6 +239,7 @@ def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
 if __name__ == '__main__':
 
     try:
+        build_versions()
         main(FASTQ_ID, FASTQ_PAIR, TRIM_RANGE, TRIM_OPTS, PHRED)
     except Exception:
         _log_error()
