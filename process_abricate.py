@@ -27,6 +27,9 @@ Code documentation
 
 """
 
+__version__ = "1.0.0"
+__build__ = "16012018"
+__template__ = "process_abricate-nf"
 
 import re
 import os
@@ -50,11 +53,37 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 
+def build_versions():
+    logger.debug("Checking module versions")
+
+    ver = [{
+        "program": __template__,
+        "version": __version__,
+        "build": __build__
+    }]
+    logger.debug("Versions list set to: {}".format(ver))
+
+    with open(".versions", "w") as fh:
+        fh.write(json.dumps(ver, separators=(",", ":")))
+
+
 if __file__.endswith(".command.sh"):
     ABRICATE_FILES = '$abricate_file'.split()
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
     logger.debug("ABRICATE_FILE: {}".format(ABRICATE_FILES))
+
+
+def _log_error():
+    """Nextflow specific function that logs an error upon unexpected failing
+    """
+
+    import traceback
+
+    with open(".status", "w") as status_fh:
+        logger.error("Module exited unexpectedly with error:\\n{}".format(
+            traceback.format_exc()))
+        status_fh.write("error")
 
 
 class Abricate:
@@ -441,4 +470,8 @@ if __name__ == '__main__':
         abr = AbricateReport(fls=abr_file)
         abr.write_report_data()
 
-    main(ABRICATE_FILES)
+    try:
+        build_versions()
+        main(ABRICATE_FILES)
+    except Exception:
+        _log_error()
