@@ -46,7 +46,7 @@ logger.addHandler(ch)
 LOG_STATS = ".pipeline_status.json"
 
 if __file__.endswith(".command.sh"):
-    TRACE_FILE = '$trace_file'
+    TRACE_FILE = '$trace.file'
     WORKDIR = '${workflow.projectDir}'
 
 
