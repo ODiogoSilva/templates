@@ -137,6 +137,7 @@ def main(fastq_id, trace_file, workdir):
     # Determine the path of the stored JSON for the fastq_id
     stats_suffix = ".stats.json"
     stats_path = join(workdir, fastq_id + stats_suffix)
+    trace_path = join(workdir, trace_file)
 
     logger.info("Starting pipeline status routine")
 
@@ -149,8 +150,8 @@ def main(fastq_id, trace_file, workdir):
     tag = " getStats"
     logger.debug("Tag variable set to: {}".format(tag))
 
-    logger.info("Starting parsing of trace file: {}".format(trace_file))
-    with open(trace_file) as fh:
+    logger.info("Starting parsing of trace file: {}".format(trace_path))
+    with open(trace_path) as fh:
 
         header = next(fh).strip().split()
         logger.debug("Header set to: {}".format(header))
