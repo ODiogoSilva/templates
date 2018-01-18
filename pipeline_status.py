@@ -27,6 +27,8 @@ import os
 import json
 import logging
 
+from os.path import join
+
 # create logger
 logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)
@@ -41,8 +43,11 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 
+LOG_STATS = ".pipeline_status.json"
+
 if __file__.endswith(".command.sh"):
     TRACE_FILE = '$trace_file'
+    WORKDIR = '${workflow.projectDir}'
 
 
 def _log_error():
@@ -74,7 +79,33 @@ def get_json_info(fields, header):
     return json_dic
 
 
-def main(trace_file):
+def get_previous_stats(workdir):
+    """
+
+    Parameters
+    ----------
+    workdir
+
+    Returns
+    -------
+
+    """
+
+    stats_path = join(workdir, LOG_STATS)
+    logger.debug("Path to pipeline status data set to: {}".format(stats_path))
+    if os.path.exists(stats_path):
+        logger.debug("Existing pipeline status data found. Loading JSON.")
+        with open(stats_path) as fh:
+            stats_json = json.load(fh)
+
+    else:
+        logger.debug("No pipeline status data found.")
+        stats_json = {}
+
+    return stats_json
+
+
+def main(trace_file, workdir):
     """
     Parses a nextflow trace file, searches for processes with a specific tag
     and sends a JSON report with the relevant information
@@ -86,15 +117,16 @@ def main(trace_file):
         2. tag
         3. status
         4. exit code
-        5. container
-        6. cpus
-        7. duration
-        8. realtime
-        9. queue
-        10. cpu percentage
-        11. memory percentage
-        12. real memory size of the process
-        13. virtual memory size of the process
+        5. start timestamp
+        6. container
+        7. cpus
+        8. duration
+        9. realtime
+        10. queue
+        11. cpu percentage
+        12. memory percentage
+        13. real memory size of the process
+        14. virtual memory size of the process
 
     Parameters
     ----------
@@ -102,31 +134,48 @@ def main(trace_file):
         Path to the nextflow trace file
     """
 
+    logger.info("Starting pipeline status routine")
+
+    logger.debug("Checking for previous pipeline status data")
+    stats_array = get_previous_stats(workdir)
+    logger.info("Stats JSON object set to : {}".format(stats_array))
+
     # Search for this substring in the tags field. Only lines with this
     # tag will be processed for the reports
     tag = " getStats"
+    logger.debug("Tag variable set to: {}".format(tag))
 
-    pipeline_report = []
-
+    logger.info("Starting parsing of trace file: {}".format(trace_file))
     with open(trace_file) as fh:
 
         header = next(fh).strip().split()
+        logger.debug("Header set to: {}".format(header))
 
         for line in fh:
             fields = line.strip().split("\t")
             # Check if tag substring is in the tag field of the nextflow trace
             if tag in fields[2] and fields[3] == "COMPLETED":
+                logger.debug(
+                    "Parsing trace line with COMPLETED status: {}".format(
+                        line))
                 current_json = get_json_info(fields, header)
 
-                pipeline_report.append(current_json)
+                stats_array[fields[0]] = current_json
+            else:
+                logger.debug(
+                    "Ignoring trace line without COMPLETED status"
+                    " or stats specific tag: {}".format(
+                        line))
 
-    with open(".report.json", "w") as fh:
-        fh.write(json.dumps(pipeline_report, separators=(",", ":")))
+    stats_path = join(workdir, LOG_STATS)
+    with open(join(stats_path), "w") as fh, open(".report.json", "w") as rfh:
+        fh.write(json.dumps(stats_array, separators=(",", ":")))
+        rfh.write(json.dumps(stats_array, separators=(",", ":")))
 
 
 if __name__ == "__main__":
 
     try:
-        main(TRACE_FILE)
+        main(TRACE_FILE, WORKDIR)
     except Exception:
         _log_error()
