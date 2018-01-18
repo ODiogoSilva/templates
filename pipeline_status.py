@@ -46,6 +46,7 @@ logger.addHandler(ch)
 LOG_STATS = ".pipeline_status.json"
 
 if __file__.endswith(".command.sh"):
+    FASTQ_ID = 'fastq_id'
     TRACE_FILE = 'pipeline_stats.txt'
     WORKDIR = '${workflow.projectDir}'
 
@@ -79,7 +80,7 @@ def get_json_info(fields, header):
     return json_dic
 
 
-def get_previous_stats(workdir):
+def get_previous_stats(stats_path):
     """
 
     Parameters
@@ -91,7 +92,6 @@ def get_previous_stats(workdir):
 
     """
 
-    stats_path = join(workdir, LOG_STATS)
     logger.debug("Path to pipeline status data set to: {}".format(stats_path))
     if os.path.exists(stats_path):
         logger.debug("Existing pipeline status data found. Loading JSON.")
@@ -105,7 +105,7 @@ def get_previous_stats(workdir):
     return stats_json
 
 
-def main(trace_file, workdir):
+def main(fastq_id, trace_file, workdir):
     """
     Parses a nextflow trace file, searches for processes with a specific tag
     and sends a JSON report with the relevant information
@@ -134,10 +134,14 @@ def main(trace_file, workdir):
         Path to the nextflow trace file
     """
 
+    # Determine the path of the stored JSON for the fastq_id
+    stats_suffix = ".stats.json"
+    stats_path = join(workdir, fastq_id + stats_suffix)
+
     logger.info("Starting pipeline status routine")
 
     logger.debug("Checking for previous pipeline status data")
-    stats_array = get_previous_stats(workdir)
+    stats_array = get_previous_stats(stats_path)
     logger.info("Stats JSON object set to : {}".format(stats_array))
 
     # Search for this substring in the tags field. Only lines with this
@@ -167,7 +171,6 @@ def main(trace_file, workdir):
                     " or stats specific tag: {}".format(
                         line))
 
-    stats_path = join(workdir, LOG_STATS)
     with open(join(stats_path), "w") as fh, open(".report.json", "w") as rfh:
         fh.write(json.dumps(stats_array, separators=(",", ":")))
         rfh.write(json.dumps(stats_array, separators=(",", ":")))
@@ -176,6 +179,6 @@ def main(trace_file, workdir):
 if __name__ == "__main__":
 
     try:
-        main(TRACE_FILE, WORKDIR)
+        main(FASTQ_ID, TRACE_FILE, WORKDIR)
     except Exception:
         _log_error()
