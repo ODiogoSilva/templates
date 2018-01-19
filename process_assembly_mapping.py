@@ -579,6 +579,7 @@ def main(fastq_id, assembly_file, coverage_file, coverage_bp_file, bam_file,
     else:
         shutil.copy(assembly_file, filtered_assembly)
         shutil.copy(bam_file, filtered_bam)
+        shutil.copy(bam_file + ".bai", filtered_bam + ".bai")
 
     with open(".status", "w") as status_fh:
         status_fh.write("pass")
