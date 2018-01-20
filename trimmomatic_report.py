@@ -207,6 +207,9 @@ def main(log_files):
         # Populate storage of current sample
         log_storage[log_id] = parse_log(log)
 
+        # Remove temporary trim log file
+        os.remove(log)
+
     write_report(log_storage, "trimmomatic_report.csv")
 
 
