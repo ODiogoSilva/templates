@@ -257,6 +257,18 @@ def trimmomatic_log(log_file):
     write_report(log_storage, "trimmomatic_report.csv")
 
 
+def clean_up():
+    """Cleans the working directory of unwanted temporary files"""
+
+    # Find unpaired fastq files
+    unpaired_fastq = [f for f in os.listdir(".")
+                      if f.endswith("_U.fastq.gz")]
+
+    # Remove unpaired fastq files, if any
+    for fpath in unpaired_fastq:
+        os.remove(fpath)
+
+
 def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
     """ Main executor of the trimmomatic template.
 
@@ -348,6 +360,8 @@ def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
         p.returncode))
 
     trimmomatic_log("{}_trimlog.txt".format(fastq_id))
+
+    clean_up()
 
     # Check if trimmomatic ran successfully. If not, write the error message
     # to the status channel and exit.
