@@ -277,7 +277,7 @@ def filter_bam(coverage_info, bam_file, min_coverage, output_bam):
     cli = [
         "samtools",
         "view",
-        "-buh",
+        "-bh",
         "-F",
         "4",
         "-o",
