@@ -470,11 +470,11 @@ def main(fastq_id, assembly_file, coverage_bp_file=None):
     size_dist = [len(x) for x in assembly_obj.contigs.values()]
     json_dic = {
         "tableRow": [
-            {"header": "contigs",
+            {"header": "Contigs",
              "value": assembly_obj.summary_info["ncontigs"],
              "table": "assembly",
              "columnBar": True},
-            {"header": "assembled bp",
+            {"header": "Assembled BP",
              "value": assembly_obj.summary_info["total_len"],
              "table": "assembly",
              "columnBar": True},

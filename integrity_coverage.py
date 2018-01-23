@@ -395,15 +395,15 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             if "-e" not in opts:
                 json_dic = {
                     "tableRow": [
-                        {"header": "bp",
+                        {"header": "Raw BP",
                          "value": chars,
                          "table": "assembly",
                          "columnBar": True},
-                        {"header": "reads",
+                        {"header": "Reads",
                          "value": nreads,
                          "table": "assembly",
                          "columnBar": True},
-                        {"header": "coverage (1st)",
+                        {"header": "Coverage (1st)",
                          "value": exp_coverage,
                          "table": "assembly",
                          "columnBar": True}
@@ -416,7 +416,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
             else:
                 json_dic = {
                     "tableRow": [
-                        {"header": "coverage (2nd)",
+                        {"header": "Coverage (2nd)",
                          "value": exp_coverage,
                          "table": "assembly",
                          "columnBar": True},

@@ -231,7 +231,7 @@ def write_report(storage_dic, output_file):
 
             json_dic = {
                 "tableRow": [
-                    {"header": "trimmed",
+                    {"header": "Trimmed (%)",
                      "value": vals["total_trim_perc"],
                      "table": "assembly",
                      "columnBar": True},
