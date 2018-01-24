@@ -537,12 +537,15 @@ def main(fastq_id, assembly_file, gsize, opts):
             "warnings": {
                 "process": "Spades",
                 "value": warnings
-            },
-            "fail": {
+            }
+        }
+
+        if fails:
+            json_dic["fail"] = {
                 "process": "Spades",
                 "value": fails
             }
-        }
+
         json_report.write(json.dumps(json_dic, separators=(",", ":")))
 
     with open(".status", "w") as status_fh:
