@@ -461,6 +461,7 @@ def main(fastq_id, assembly_file, gsize, opts):
 
     logger.info("Starting SPAdes processing")
     warnings = []
+    fails = None
 
     min_contig_len, min_kmer_cov, max_contigs = [int(x) for x in opts]
     logger.debug("Setting minimum conting length to: {}".format(
@@ -500,7 +501,7 @@ def main(fastq_id, assembly_file, gsize, opts):
                                 assembly_len)
                 logger.warning(warn_msg)
                 warn_fh.write(warn_msg)
-                warnings.append("small_size:moderate")
+                fails = "Small_genome_size_({})".format(assembly_len)
 
         if assembly_len > t_150:
 
@@ -509,7 +510,7 @@ def main(fastq_id, assembly_file, gsize, opts):
                             assembly_len)
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
-            warnings.append("large_size:moderate")
+            fails = "Large_genome_size_({})".format(assembly_len)
 
         logger.debug("Checking number of contigs: {}".format(
             len(spades_assembly.contigs)))
@@ -536,6 +537,10 @@ def main(fastq_id, assembly_file, gsize, opts):
             "warnings": {
                 "process": "Spades",
                 "value": warnings
+            },
+            "fail": {
+                "process": "Spades",
+                "value": fails
             }
         }
         json_report.write(json.dumps(json_dic, separators=(",", ":")))

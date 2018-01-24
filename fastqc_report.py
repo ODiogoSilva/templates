@@ -615,7 +615,10 @@ def main(fastq_id, result_p1, result_p2, opts):
                                " {}".format(",".join(f_cat))
                     logger.warning(fail_msg)
                     fail_fh.write(fail_msg)
-                    json_dic["fail"] = fail_msg
+                    json_dic["fail"] = {
+                        "process": "fastqc",
+                        "value": fail_msg
+                    }
                     status_fh.write("fail")
                     trim_fh.write("fail")
                     rep_fh.write("{}, {}\\n".format(fastq_id, ",".join(f_cat)))

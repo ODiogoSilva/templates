@@ -386,6 +386,7 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
     assembled_total_bp = sum([sum(coverage_bp[x]) for x in filtered_contigs])
 
     warnings = []
+    fails = None
     health = True
 
     with open(".warnings", "w") as warn_fh, \
@@ -402,7 +403,7 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
                             assembly_len)
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
-            warnings.append("large_size:high")
+            fails = "Large_genome_size_({})".format(assembly_len)
 
         # If the number of contigs in the filtered assembly size crosses the
         # max_contigs threshold, issue a warning
@@ -425,7 +426,7 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
                             assembly_len)
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
-            warnings.append("small_size:high")
+            fails = "Small_genome_size_({})".format(assembly_len)
             assembled_total_bp = sum(
                 [sum(coverage_bp[x]) for x in coverage_info])
 
@@ -442,6 +443,11 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
             json_dic["warnings"] = {
                 "process": "Assembly mapping",
                 "value": warnings
+            }
+        if fails:
+            json_dic["fail"] = {
+                "process": "Assembly mapping",
+                "value": fails
             }
 
         json_report.write(json.dumps(json_dic, separators=(",", ":")))
