@@ -461,7 +461,7 @@ def main(fastq_id, assembly_file, gsize, opts):
 
     logger.info("Starting SPAdes processing")
     warnings = []
-    fails = None
+    fails = ""
 
     min_contig_len, min_kmer_cov, max_contigs = [int(x) for x in opts]
     logger.debug("Setting minimum conting length to: {}".format(

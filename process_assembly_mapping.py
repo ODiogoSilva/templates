@@ -386,7 +386,7 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
     assembled_total_bp = sum([sum(coverage_bp[x]) for x in filtered_contigs])
 
     warnings = []
-    fails = None
+    fails = ""
     health = True
 
     with open(".warnings", "w") as warn_fh, \
