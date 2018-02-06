@@ -619,10 +619,13 @@ def main(fastq_id, result_p1, result_p2, opts):
                         "process": "fastqc",
                         "value": fail_msg
                     }
+                    report_fh.write(
+                        json.dumps(json_dic, separators=(",", ":")))
                     status_fh.write("fail")
                     trim_fh.write("fail")
                     rep_fh.write("{}, {}\\n".format(fastq_id, ",".join(f_cat)))
                     trep_fh.write("{},fail,fail\\n".format(fastq_id))
+
                     return
 
             logger.info("Sample passed quality control checks")
