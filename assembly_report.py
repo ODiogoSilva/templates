@@ -39,6 +39,7 @@ import re
 import json
 import traceback
 import subprocess
+import sys
 
 from collections import OrderedDict
 from subprocess import PIPE
