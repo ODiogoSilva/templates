@@ -55,25 +55,22 @@ import os
 import re
 import json
 import shutil
-import logging
+import traceback
 import subprocess
+import sys
 
 from subprocess import PIPE
 from collections import OrderedDict
 
 
-# create logger
-logger = logging.getLogger(os.path.basename(__file__))
-logger.setLevel(logging.DEBUG)
-# create console handler and set level to debug
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-# create formatter
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-# add formatter to ch
-ch.setFormatter(formatter)
-# add ch to logger
-logger.addHandler(ch)
+try:
+    sys.path.append(os.environ["ASSEMBLERFLOW_UTILS"])
+except KeyError:
+    pass
+
+from utils.assemblerflow_base import get_logger, _log_error
+
+logger = get_logger(__file__)
 
 
 def build_versions():
@@ -598,4 +595,6 @@ if __name__ == '__main__':
         main(FASTQ_ID, ASSEMBLY_FILE, COVERAGE_FILE, COVERAGE_BP_FILE,
              BAM_FILE, OPTS, GSIZE)
     except Exception as e:
+        logger.error("Module exited unexpectedly with error:\\n{}".format(
+            traceback.format_exc()))
         _log_error()

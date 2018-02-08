@@ -47,24 +47,21 @@ __template__ = "spades-nf"
 
 import os
 import json
-import logging
+import traceback
 import subprocess
+import sys
 
 from subprocess import PIPE
 
 
-# create logger
-logger = logging.getLogger(os.path.basename(__file__))
-logger.setLevel(logging.DEBUG)
-# create console handler and set level to debug
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-# create formatter
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-# add formatter to ch
-ch.setFormatter(formatter)
-# add ch to logger
-logger.addHandler(ch)
+try:
+    sys.path.append(os.environ["ASSEMBLERFLOW_UTILS"])
+except KeyError:
+    pass
+
+from utils.assemblerflow_base import get_logger, _log_error
+
+logger = get_logger(__file__)
 
 
 def build_versions():
@@ -193,13 +190,13 @@ def main(fastq_id, fastq_pair, max_len, kmer, opts):
 
     """
 
-    logging.info("Starting spades")
+    logger.info("Starting spades")
 
     min_coverage, min_kmer_coverage = opts
 
-    logging.info("Setting SPAdes kmers")
+    logger.info("Setting SPAdes kmers")
     kmers = set_kmers(kmer, max_len)
-    logging.info("SPAdes kmers set to: {}".format(kmers))
+    logger.info("SPAdes kmers set to: {}".format(kmers))
 
     cli = [
         "spades.py",
@@ -265,4 +262,6 @@ if __name__ == '__main__':
         build_versions()
         main(FASTQ_ID, FASTQ_PAIR, MAX_LEN, KMERS, OPTS)
     except:
+        logger.error("Module exited unexpectedly with error:\\n{}".format(
+            traceback.format_exc()))
         _log_error()
