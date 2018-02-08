@@ -23,27 +23,23 @@ Code documentation
 """
 
 __version__ = "1.0.0"
-__build__ = "07022018"
+__build__ = "08022018"
 __template__ = "mashscreen2json-nf"
 
 from statistics import median
+import sys
 import os
 import json
-import logging
+import traceback
 
-# create logger
-logger = logging.getLogger(os.path.basename(__file__))
-logger.setLevel(logging.DEBUG)
-# create console handler and set level to debug
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-# create formatter
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-# add formatter to ch
-ch.setFormatter(formatter)
-# add ch to logger
-logger.addHandler(ch)
+try:
+    sys.path.append(os.environ["ASSEMBLERFLOW_UTILS"])
+except KeyError:
+    pass
 
+from utils.assemblerflow_base import get_logger, _log_error
+
+logger = get_logger(__file__)
 
 def build_versions():
     logger.debug("Checking module versions")
@@ -119,5 +115,11 @@ def main(mash_output):
     output_json.close()
 
 if __name__ == "__main__":
-    # a variable from nextflow process
-    main(MASH_TXT)
+    try:
+        build_versions()
+        # a variable from nextflow process
+        main(MASH_TXT)
+    except Exception:
+        logger.error("Module exited unexpectedly with error:\\n{}".format(
+            traceback.format_exc()))
+        _log_error()
