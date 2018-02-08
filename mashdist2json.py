@@ -1,6 +1,64 @@
 #!/usr/bin/env python3
 
+
+"""
+Purpose
+-------
+
+This module is intended to generate a json output for mash dist results that
+can be imported in pATLAS.
+
+Expected input
+--------------
+
+The following variables are expected whether using NextFlow or the
+:py:func:`main` executor.
+
+- ``mash_output`` : String with the name of the mash screen output file.
+    - e.g.: ``'fastaFileA_mashdist.txt'``
+
+
+Code documentation
+------------------
+
+"""
+
+__version__ = "1.0.0"
+__build__ = "08022018"
+__template__ = "mashsdist2json-nf"
+
+import sys
+import os
 import json
+import traceback
+
+try:
+    sys.path.append(os.environ["ASSEMBLERFLOW_UTILS"])
+except KeyError:
+    pass
+
+from utils.assemblerflow_base import get_logger, _log_error
+
+logger = get_logger(__file__)
+
+def build_versions():
+    logger.debug("Checking module versions")
+
+    ver = [{
+        "program": __template__,
+        "version": __version__,
+        "build": __build__
+    }]
+    logger.debug("Versions list set to: {}".format(ver))
+
+    with open(".versions", "w") as fh:
+        fh.write(json.dumps(ver, separators=(",", ":")))
+
+if __file__.endswith(".command.sh"):
+    MASH_TXT = '$depthFile'
+    logger.debug("Running {} with parameters:".format(
+        os.path.basename(__file__)))
+    logger.debug("MASH_TXT: {}".format(MASH_TXT))
 
 if __file__.endswith(".command.sh"):
     MASH_TXT = '$mashtxt'
@@ -32,5 +90,11 @@ def main(mash_output):
     out_file.close()
 
 if __name__ == "__main__":
-    # a variable from nextflow process
-    main(MASH_TXT)
+    try:
+        build_versions()
+        # a variable from nextflow process
+        main(MASH_TXT)
+    except Exception:
+        logger.error("Module exited unexpectedly with error:\\n{}".format(
+            traceback.format_exc()))
+        _log_error()
