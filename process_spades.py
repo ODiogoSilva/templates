@@ -90,18 +90,6 @@ if __file__.endswith(".command.sh"):
     logger.debug("OPTS: {}".format(OPTS))
 
 
-def _log_error():
-    """Nextflow specific function that logs an error upon unexpected failing
-    """
-
-    import traceback
-
-    with open(".status", "w") as status_fh:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        status_fh.write("error")
-
-
 class Assembly:
     """Class that parses and filters a Spades Fasta assembly file
 

@@ -67,18 +67,6 @@ if __file__.endswith(".command.sh"):
     LOG_FILES = '$log_files'.split()
 
 
-def _log_error():
-    """Nextflow specific function that logs an error upon unexpected failing
-    """
-
-    import traceback
-
-    with open(".status", "w") as status_fh:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        status_fh.write("error")
-
-
 def parse_log(log_file):
     """Retrieves some statistics from a single Trimmomatic log file.
 

@@ -97,18 +97,6 @@ if __file__.endswith(".command.sh"):
     logger.debug("OPTS: {}".format(OPTS))
 
 
-def _log_error():
-    """Nextflow specific function that logs an error upon unexpected failing
-    """
-
-    import traceback
-
-    with open(".status", "w") as status_fh:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        status_fh.write("error")
-
-
 def _get_quality_stats(d, start_str, field_start=1, field_end=2):
     """
 

@@ -101,15 +101,6 @@ if __file__.endswith(".command.sh"):
     logger.debug("COVERAGE_BP_FILE: {}".format(COVERAGE_BP_FILE))
 
 
-def _log_error():
-    """Nextflow specific function that logs an error upon unexpected failing
-    """
-
-    with open(".status", "w") as status_fh:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        status_fh.write("error")
-
 
 class Assembly:
     """Class that parses and filters an assembly file in Fasta format.

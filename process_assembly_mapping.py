@@ -140,18 +140,6 @@ if __file__.endswith(".command.sh"):
     logger.debug("GSIZE: {}".format(GSIZE))
 
 
-def _log_error():
-    """Nextflow specific function that logs an error upon unexpected failing
-    """
-
-    import traceback
-
-    with open(".status", "w") as status_fh:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        status_fh.write("error")
-
-
 def parse_coverage_table(coverage_file):
     """Parses a file with coverage information into objects.
 

@@ -113,18 +113,6 @@ if __file__.endswith(".command.sh"):
     logger.debug("OPTS: {}".format(OPTS))
 
 
-def _log_error():
-    """Nextflow specific function that logs an error upon unexpected failing
-    """
-
-    import traceback
-
-    with open(".status", "w") as status_fh:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        status_fh.write("error")
-
-
 def set_kmers(kmer_opt, max_read_len):
     """Returns a kmer list based on the provided kmer option and max read len.
 

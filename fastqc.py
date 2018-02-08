@@ -100,18 +100,6 @@ if __file__.endswith(".command.sh"):
     logger.debug("CPUS: {}".format(CPUS))
 
 
-def _log_error():
-    """Nextflow specific function that logs an error upon unexpected failing
-    """
-
-    import traceback
-
-    with open(".status", "w") as status_fh:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        status_fh.write("error")
-
-
 def convert_adatpers(adapter_fasta):
     """Generates an adapter file for FastQC from a fasta file.
 
