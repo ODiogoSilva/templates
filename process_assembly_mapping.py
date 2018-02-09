@@ -358,7 +358,7 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
     """
 
     # Get size of assembly after filtering contigs below minimum_coverage
-    assembly_len = sum([v for k, v in coverage_info.items()
+    assembly_len = sum([v for k, v in contig_size.items()
                         if coverage_info[k]["cov"] >= minimum_coverage])
     # Get number of contigs after filtering
     ncontigs = len([x for x in coverage_info.values()
