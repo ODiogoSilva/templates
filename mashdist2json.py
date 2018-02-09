@@ -55,13 +55,10 @@ def build_versions():
         fh.write(json.dumps(ver, separators=(",", ":")))
 
 if __file__.endswith(".command.sh"):
-    MASH_TXT = '$depthFile'
+    MASH_TXT = '$mashtxt'
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
     logger.debug("MASH_TXT: {}".format(MASH_TXT))
-
-if __file__.endswith(".command.sh"):
-    MASH_TXT = '$mashtxt'
 
 def main(mash_output):
     '''
