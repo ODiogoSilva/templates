@@ -47,8 +47,8 @@ Code documentation
 
 """
 
-__version__ = "1.0.0"
-__build__ = "16012018"
+__version__ = "1.0.1"
+__build__ = "09022018"
 __template__ = "process_assembly_mapping-nf"
 
 import os
@@ -328,7 +328,10 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
 
     Given a minimum coverage threshold, this function evaluates whether an
     assembly will pass the minimum threshold of ``genome_size * 1e6 * 0.8``,
-    which means 80% of the expected genome size.
+    which means 80% of the expected genome size or the maximum threshold
+    of ``genome_size * 1e6 * 1.5``, which means 150% of the expected genome
+    size. It will issue a warning if any of these thresholds is crossed.
+    In the case of an expected genome size below 80% it will return False.
 
     Parameters
     ----------
