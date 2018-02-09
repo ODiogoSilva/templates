@@ -169,8 +169,6 @@ def parse_coverage_table(coverage_file):
     # Stores the correspondence between a contig and the corresponding coverage
     # e.g.: {"contig_1": {"cov": 424, "len": 4231} }
     coverage_dict = OrderedDict()
-    # Stores the total assembly size
-    total_size = 0
     # Stores the total coverage
     total_cov = 0
 
@@ -178,16 +176,13 @@ def parse_coverage_table(coverage_file):
         for line in fh:
             # Get contig and coverage
             contig, cov = line.strip().split()
-            contig_len = int(re.search("length_(.+?)_", line).group(1))
-            coverage_dict[contig] = {"cov": int(cov), "len": contig_len}
+            coverage_dict[contig] = {"cov": int(cov)}
             # Add total coverage
             total_cov += int(cov)
-            # Add total size
-            total_size += contig_len
-            logger.debug("Processing contig '{}' with coverage '{}' and "
-                         "length of '{}'".format(contig, cov, contig_len))
+            logger.debug("Processing contig '{}' with coverage '{}'"
+                         "".format(contig, cov))
 
-    return coverage_dict, total_size, total_cov
+    return coverage_dict, total_cov
 
 
 def filter_assembly(assembly_file, minimum_coverage, coverage_info,
@@ -481,6 +476,12 @@ def evaluate_min_coverage(coverage_opt, assembly_coverage, assembly_size):
         If set to "auto" it will try to automatically determine the coverage
         to 1/3 of the assembly size, to a minimum value of 10. If it set
         to a int or float, the specified value will be used.
+    assembly_coverage : int or float
+        The average assembly coverage for a genome assembly. This value
+        is retrieved by the `:py:func:parse_coverage_table` function.
+    assembly_size : int
+        The size of the genome assembly. This value is retrieved by the
+        `py:func:get_assembly_size` function.
 
     Returns
     -------
@@ -506,6 +507,35 @@ def evaluate_min_coverage(coverage_opt, assembly_coverage, assembly_size):
             min_coverage))
 
     return min_coverage
+
+
+def get_assembly_size(assembly_file):
+    """Returns the number of nucleotides for the provided assembly file path
+
+    Parameters
+    ----------
+    assembly_file : str
+        Path to assembly file.
+
+    Returns
+    -------
+    assembly_size : int
+        Size of the assembly in nucleotides
+
+    """
+
+    assembly_size = 0
+
+    with open(assembly_file) as fh:
+        for line in fh:
+
+            # Skip header or empty lines
+            if line.startswith(">") or line.strip() == "":
+                continue
+
+            assembly_size += len(line.strip())
+
+    return assembly_size
 
 
 def main(fastq_id, assembly_file, coverage_file, coverage_bp_file, bam_file,
@@ -537,7 +567,8 @@ def main(fastq_id, assembly_file, coverage_file, coverage_bp_file, bam_file,
 
     # Get coverage info, total size and total coverage from the assembly
     logger.info("Parsing coverage table")
-    coverage_info, a_size, a_cov = parse_coverage_table(coverage_file)
+    coverage_info, a_cov = parse_coverage_table(coverage_file)
+    a_size = get_assembly_size(assembly_file)
     logger.info("Assembly processed with a total size of '{}' and coverage"
                 " of '{}'".format(a_size, a_cov))
     # Get number of assembled bp after filters
