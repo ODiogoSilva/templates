@@ -22,8 +22,8 @@ file that contains a `key:[values]` such as `accession number:[copy number, iden
 git submodule add https://github.com/ODiogoSilva/templates.git templates
 ```
 
-### Update templates on existing submodule
+### Update templates on your project
 
 ```
-git submodule update --init --recursive
+git submodule foreach git pull origin master
 ```
