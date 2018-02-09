@@ -95,23 +95,30 @@ def main(mash_output):
         dic[query_id] = [identity, median_multiplicity]
         median_list.append(float(median_multiplicity))
 
+    output_json = open(" ".join(mash_output.split(".")[:-1]) + ".json", "w")
+
     # median cutoff is twice the median of all median_multiplicity values
     # reported by mash screen. In the case of plasmids, since the database
     # has 9k entries and reads shouldn't have that many sequences it seems ok...
-    median_cutoff = median(median_list)
+    if len(median_list) > 0:
+        # this statement assures that median_list has indeed any entries
+        median_cutoff = median(median_list)
+        logger.info("Generating final json to dump to a file")
+        filtered_dic = {}
+        for k, v in dic.items():
+            # estimated copy number
+            copy_number = int(float(v[1]) / median_cutoff)
+            # assure that plasmid as at least twice the median coverage depth
+            if float(v[1]) > median_cutoff:
+                filtered_dic["_".join(k.split("_")[0:3])] = [v[0],
+                                                             str(copy_number)]
+        logger.info(
+            "Exported dictionary has {} entries".format(len(filtered_dic)))
+        output_json.write(json.dumps(filtered_dic))
+    else:
+        # if no entries were found raise an error
+        logger.error("No matches were found using mash screen for the queried reads")
 
-    output_json = open(" ".join(mash_output.split(".")[:-1]) + ".json", "w")
-
-    logger.info("Generating final json to dump to a file")
-    filtered_dic = {}
-    for k,v in dic.items():
-        # estimated copy number
-        copy_number = int(float(v[1])/median_cutoff)
-        # assure that plasmid as at least twice the median coverage depth
-        if float(v[1]) > median_cutoff:
-            filtered_dic["_".join(k.split("_")[0:3])] = [v[0], str(copy_number)]
-    logger.info("Exported dictionary has {} entries".format(len(filtered_dic)))
-    output_json.write(json.dumps(filtered_dic))
     output_json.close()
 
 if __name__ == "__main__":
