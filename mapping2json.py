@@ -99,7 +99,7 @@ def depthfilereader(depth_file, plasmid_length, cutoff):
         reference = "_".join(tab_split[0].strip().split("_")[0:3])  # store
         # only the gi for the reference
         position = tab_split[1]
-        numreadsalign = float(tab_split[2].rstrip("\n"))
+        numreadsalign = float(tab_split[2].rstrip())
         if reference not in depth_dic_coverage:
             depth_dic_coverage[reference] = {}
         depth_dic_coverage[reference][position] = numreadsalign
