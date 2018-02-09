@@ -323,7 +323,7 @@ def filter_bam(coverage_info, bam_file, min_coverage, output_bam):
 
 
 def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
-                            genome_size, max_contigs):
+                            genome_size, contig_size, max_contigs):
     """Checks whether a filtered assembly passes a size threshold
 
     Given a minimum coverage threshold, this function evaluates whether an
@@ -342,6 +342,9 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
         Minimum coverage required for a contig to pass the filter.
     genome_size : int
         Expected genome size.
+    contig_size : dict
+        Dictionary with the len of each contig. Contig headers as keys and
+        the corresponding lenght as values.
     max_contigs : int
         Maximum threshold for contig number. A warning is issued if this
         threshold is crossed.
@@ -355,8 +358,8 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
     """
 
     # Get size of assembly after filtering contigs below minimum_coverage
-    assembly_len = sum([x["len"] for x in coverage_info.values()
-                        if x["cov"] >= minimum_coverage])
+    assembly_len = sum([v for k, v in coverage_info.values()
+                        if coverage_info[k]["cov"] >= minimum_coverage])
     # Get number of contigs after filtering
     ncontigs = len([x for x in coverage_info.values()
                     if x["cov"] >= minimum_coverage])
@@ -510,7 +513,8 @@ def evaluate_min_coverage(coverage_opt, assembly_coverage, assembly_size):
 
 
 def get_assembly_size(assembly_file):
-    """Returns the number of nucleotides for the provided assembly file path
+    """Returns the number of nucleotides and the size per contig for the
+    provided assembly file path
 
     Parameters
     ----------
@@ -521,21 +525,32 @@ def get_assembly_size(assembly_file):
     -------
     assembly_size : int
         Size of the assembly in nucleotides
+    contig_size : dict
+        Length of each contig (contig name as key and length as value)
 
     """
 
     assembly_size = 0
+    contig_size = {}
+    header = ""
 
     with open(assembly_file) as fh:
         for line in fh:
 
-            # Skip header or empty lines
-            if line.startswith(">") or line.strip() == "":
+            # Skip empty lines
+            if line.strip() == "":
                 continue
 
-            assembly_size += len(line.strip())
+            if line.startswith(">"):
+                header = line.strip()[1:]
+                contig_size[header] = 0
 
-    return assembly_size
+            else:
+                line_len = len(line.strip())
+                assembly_size += line_len
+                contig_size[header] += line_len
+
+    return assembly_size, contig_size
 
 
 def main(fastq_id, assembly_file, coverage_file, coverage_bp_file, bam_file,
@@ -568,7 +583,7 @@ def main(fastq_id, assembly_file, coverage_file, coverage_bp_file, bam_file,
     # Get coverage info, total size and total coverage from the assembly
     logger.info("Parsing coverage table")
     coverage_info, a_cov = parse_coverage_table(coverage_file)
-    a_size = get_assembly_size(assembly_file)
+    a_size, contig_size = get_assembly_size(assembly_file)
     logger.info("Assembly processed with a total size of '{}' and coverage"
                 " of '{}'".format(a_size, a_cov))
     # Get number of assembled bp after filters
@@ -587,7 +602,7 @@ def main(fastq_id, assembly_file, coverage_file, coverage_bp_file, bam_file,
     filtered_bam = "filtered.bam"
     logger.info("Checking filtered assembly")
     if check_filtered_assembly(coverage_info, coverage_bp_data, min_coverage,
-                               gsize, int(max_contigs)):
+                               gsize, contig_size, int(max_contigs)):
         # Filter assembly contigs based on the minimum coverage.
         logger.info("Filtered assembly passed minimum size threshold")
         logger.info("Writting filtered assembly")
