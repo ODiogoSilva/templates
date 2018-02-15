@@ -363,7 +363,8 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
     # Get size of assembly after filtering contigs below minimum_coverage
     assembly_len = sum([v for k, v in contig_size.items()
                         if coverage_info[k]["cov"] >= minimum_coverage])
-    logger.debug("Assembly length: {}".format(assembly_len))
+    logger.debug("Assembly length after filtering for minimum coverage of"
+                 "{}: {}".format(minimum_coverage, assembly_len))
     # Get number of contigs after filtering
     ncontigs = len([x for x in coverage_info.values()
                     if x["cov"] >= minimum_coverage])
@@ -371,10 +372,8 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
     # Get number of bp after filtering
     filtered_contigs = [k for k, v in coverage_info.items()
                         if v["cov"] >= minimum_coverage]
-    logger.debug("Number of filtered contigs for minimum coverage of "
+    logger.debug("Filtered contigs for minimum coverage of "
                  "{}: {}".format(minimum_coverage, filtered_contigs))
-    assembled_total_bp = sum([sum(coverage_bp[x]) for x in filtered_contigs])
-    logger.debug("Total assembled bp: {}".format(assembled_total_bp))
 
     warnings = []
     fails = ""
@@ -418,15 +417,15 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
             fails = "Small_genome_size_({})".format(assembly_len)
-            assembled_total_bp = sum(
-                [sum(coverage_bp[x]) for x in coverage_info])
-            logger.debug("Total assembled bp: {}".format(assembled_total_bp))
+            assembly_len = sum([v for k, v in contig_size.values()])
+            logger.debug("Assembly length without coverage filtering: "
+                         "{}".format(assembly_len))
 
             health = False
 
         json_dic = {
             "plotData": {
-                "sparkline": assembled_total_bp,
+                "sparkline": assembly_len,
                 "coverageDist": [x["cov"] for x in coverage_info.values()]
             }
         }
