@@ -364,7 +364,7 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
     assembly_len = sum([v for k, v in contig_size.items()
                         if coverage_info[k]["cov"] >= minimum_coverage])
     logger.debug("Assembly length after filtering for minimum coverage of"
-                 "{}: {}".format(minimum_coverage, assembly_len))
+                 " {}: {}".format(minimum_coverage, assembly_len))
     # Get number of contigs after filtering
     ncontigs = len([x for x in coverage_info.values()
                     if x["cov"] >= minimum_coverage])
@@ -417,7 +417,7 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
             fails = "Small_genome_size_({})".format(assembly_len)
-            assembly_len = sum([v for k, v in contig_size.values()])
+            assembly_len = sum([v for v in contig_size.values()])
             logger.debug("Assembly length without coverage filtering: "
                          "{}".format(assembly_len))
 
