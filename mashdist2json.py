@@ -27,19 +27,14 @@ __version__ = "1.0.0"
 __build__ = "08022018"
 __template__ = "mashsdist2json-nf"
 
-import sys
 import os
 import json
 import traceback
 
-try:
-    sys.path.append(os.environ["ASSEMBLERFLOW_UTILS"])
-except KeyError:
-    pass
-
-from utils.assemblerflow_base import get_logger, _log_error
+from utils.assemblerflow_base import get_logger, log_error
 
 logger = get_logger(__file__)
+
 
 def build_versions():
     logger.debug("Checking module versions")
@@ -54,11 +49,13 @@ def build_versions():
     with open(".versions", "w") as fh:
         fh.write(json.dumps(ver, separators=(",", ":")))
 
+
 if __file__.endswith(".command.sh"):
     MASH_TXT = '$mashtxt'
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
     logger.debug("MASH_TXT: {}".format(MASH_TXT))
+
 
 def main(mash_output):
     '''
@@ -86,6 +83,7 @@ def main(mash_output):
     out_file.write(json.dumps(master_dict))
     out_file.close()
 
+
 if __name__ == "__main__":
     try:
         build_versions()
@@ -94,4 +92,4 @@ if __name__ == "__main__":
     except Exception:
         logger.error("Module exited unexpectedly with error:\\n{}".format(
             traceback.format_exc()))
-        _log_error()
+        log_error()

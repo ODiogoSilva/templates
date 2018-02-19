@@ -23,7 +23,7 @@ def get_logger(filepath, level=logging.DEBUG):
     return logger
 
 
-def _log_error():
+def log_error():
     """Nextflow specific function that logs an error upon unexpected failing
     """
 

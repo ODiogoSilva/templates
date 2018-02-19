@@ -33,19 +33,14 @@ __version__ = "1.0.0"
 __build__ = "08022018"
 __template__ = "mapping2json-nf"
 
-import sys
 import os
 import json
 import traceback
 
-try:
-    sys.path.append(os.environ["ASSEMBLERFLOW_UTILS"])
-except KeyError:
-    pass
-
-from utils.assemblerflow_base import get_logger, _log_error
+from utils.assemblerflow_base import get_logger, log_error
 
 logger = get_logger(__file__)
+
 
 def build_versions():
     logger.debug("Checking module versions")
@@ -60,6 +55,7 @@ def build_versions():
     with open(".versions", "w") as fh:
         fh.write(json.dumps(ver, separators=(",", ":")))
 
+
 if __file__.endswith(".command.sh"):
     DEPTH_TXT = '$depthFile'
     JSON_LENGTH = '$lengthJson'
@@ -69,6 +65,7 @@ if __file__.endswith(".command.sh"):
     logger.debug("DEPTH_TXT: {}".format(DEPTH_TXT))
     logger.debug("JSON_LENGHT: {}".format(JSON_LENGTH))
     logger.debug("CUTOFF: {}".format(CUTOFF))
+
 
 def depthfilereader(depth_file, plasmid_length, cutoff):
     '''
@@ -114,6 +111,7 @@ def depthfilereader(depth_file, plasmid_length, cutoff):
             percentage_basescovered[ref] = perc_value_per_ref
 
     return percentage_basescovered
+
 
 def main(depth_file, json_dict, cutoff):
     '''
@@ -170,4 +168,4 @@ if __name__ == "__main__":
     except Exception:
         logger.error("Module exited unexpectedly with error:\\n{}".format(
             traceback.format_exc()))
-        _log_error()
+        log_error()

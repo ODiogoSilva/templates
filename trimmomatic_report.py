@@ -34,16 +34,10 @@ __template__ = "trimmomatic_report-nf"
 import os
 import json
 import traceback
-import sys
 
 from collections import OrderedDict
 
-try:
-    sys.path.append(os.environ["ASSEMBLERFLOW_UTILS"])
-except KeyError:
-    pass
-
-from utils.assemblerflow_base import get_logger, _log_error
+from utils.assemblerflow_base import get_logger, log_error
 
 logger = get_logger(__file__)
 
@@ -206,4 +200,4 @@ if __name__ == '__main__':
     except:
         logger.error("Module exited unexpectedly with error:\\n{}".format(
             traceback.format_exc()))
-        _log_error()
+        log_error()
