@@ -4,6 +4,7 @@
 
 import os
 import logging
+import traceback
 
 
 def get_logger(filepath, level=logging.DEBUG):
@@ -29,3 +30,27 @@ def log_error():
 
     with open(".status", "w") as status_fh:
         status_fh.write("error")
+
+
+class MainWrapper:
+
+    def __init__(self, f):
+
+        self.f = f
+
+    def __call__(self, *args, **kwargs):
+
+        context = self.f.__globals__
+
+        logger = context.get("logger", None)
+        build_versions = context.get("build_versions", None)
+
+        try:
+            if build_versions:
+                build_versions()
+            self.f(*args, **kwargs)
+        except:
+            if logger:
+                logger.error("Module exited unexpectedly with error:"
+                             "\\n{}".format(traceback.format_exc()))
+            log_error()
