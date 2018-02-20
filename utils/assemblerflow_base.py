@@ -3,6 +3,7 @@
 """
 
 import os
+import json
 import logging
 import traceback
 
@@ -54,3 +55,52 @@ class MainWrapper:
                 logger.error("Module exited unexpectedly with error:"
                              "\\n{}".format(traceback.format_exc()))
             log_error()
+
+    def build_versions(self):
+        """Writes versions JSON for a template file
+
+        This method creates the JSON file ``.versions`` based on the metadata
+        and specific functions that are present in a given template script.
+
+        It starts by fetching the template metadata, which can be specified
+        via the ``__version__``, ``__template__`` and ``__build__``
+        attributes. If all of these attributes exist, it starts to populate
+        a JSON/dict array (Note that the absence of any one of them will
+        prevent the version from being written).
+
+        Then, it will search the
+        template scope for functions that start with the substring
+        ``__set_version`` (For example ``def __set_version_fastqc()`).
+        These functions should gather the version of
+        an arbitrary program and return a JSON/dict object with the following
+        information::
+
+            {
+                "program": <program_name>,
+                "version": <version>
+                "build": <build>
+            }
+
+        This JSON/dict object is then written in the ``.versions`` file.
+        """
+
+        version_storage = []
+
+        template_version = self.context.get("__version__", None)
+        template_program = self.context.get("__template__", None)
+        template_build = self.context.get("__build__", None)
+
+        if template_version and template_program and template_build:
+            version_storage.append({
+                "program": template_program,
+                "version": template_version,
+                "build": template_build
+            })
+
+        for var, obj in self.context:
+            if var.startswith("__set_version"):
+                version_storage.append(obj())
+
+        with open(".versions", "w") as fh:
+            fh.write(json.dumps(version_storage, separators=(",", ":")))
+
