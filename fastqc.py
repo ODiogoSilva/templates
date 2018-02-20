@@ -49,38 +49,24 @@ from utils.assemblerflow_base import get_logger, log_error
 logger = get_logger(__file__)
 
 
-def build_versions():
+def __set_version_fastqc():
 
-    def get_fastqc_version():
+    try:
 
-        try:
+        cli = ["fastqc", "--version"]
+        p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+        stdout, _ = p.communicate()
 
-            cli = ["fastqc", "--version"]
-            p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
-            stdout, _ = p.communicate()
+        version = stdout.strip().split()[1][1:].decode("utf8")
 
-            version = stdout.strip().split()[1][1:].decode("utf8")
+    except Exception as e:
+        logger.debug(e)
+        version = "undefined"
 
-        except Exception as e:
-            logger.debug(e)
-            version = "undefined"
-
-        return {
-            "program": "FastQC",
-            "version": version,
-        }
-
-    logger.debug("Checking module versions")
-
-    ver = [{
-        "program": __template__,
-        "version": __version__,
-        "build": __build__
-    }, get_fastqc_version()]
-    logger.debug("Versions list set to: {}".format(ver))
-
-    with open(".versions", "w") as fh:
-        fh.write(json.dumps(ver, separators=(",", ":")))
+    return {
+        "program": "FastQC",
+        "version": version,
+    }
 
 
 if __file__.endswith(".command.sh"):

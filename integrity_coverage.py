@@ -91,21 +91,6 @@ from utils.assemblerflow_base import get_logger, log_error
 
 logger = get_logger(__file__)
 
-
-def build_versions():
-    logger.debug("Checking module versions")
-
-    ver = [{
-        "program": __template__,
-        "version": __version__,
-        "build": __build__
-    }]
-    logger.debug("Versions list set to: {}".format(ver))
-
-    with open(".versions", "w") as fh:
-        fh.write(json.dumps(ver, separators=(",", ":")))
-
-
 # Set constants when running from Nextflow
 if __file__.endswith(".command.sh"):
     # CONSTANTS
