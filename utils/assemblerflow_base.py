@@ -44,11 +44,9 @@ class MainWrapper:
         context = self.f.__globals__
 
         logger = context.get("logger", None)
-        build_versions = context.get("build_versions", None)
 
         try:
-            if build_versions:
-                build_versions()
+            self.build_versions()
             self.f(*args, **kwargs)
         except:
             if logger:
