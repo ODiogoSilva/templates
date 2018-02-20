@@ -54,63 +54,50 @@ __template__ = "process_assembly_mapping-nf"
 import os
 import json
 import shutil
-import traceback
 import subprocess
 
 from subprocess import PIPE
 from collections import OrderedDict
 
-from utils.assemblerflow_base import get_logger, log_error
+from utils.assemblerflow_base import get_logger, MainWrapper
 
 logger = get_logger(__file__)
 
 
-def build_versions():
-    logger.debug("Checking module versions")
+def __get_version_samtools():
 
-    def get_samtools_version():
+    try:
+        cli = ["samtools", "--version"]
+        p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+        stdout = p.communicate()[0]
 
-        try:
-            cli = ["samtools", "--version"]
-            p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
-            stdout = p.communicate()[0]
+        version = stdout.splitlines()[0].split()[1].decode("utf8")
+    except Exception as e:
+        logger.debug(e)
+        version = "undefined"
 
-            version = stdout.splitlines()[0].split()[1].decode("utf8")
-        except Exception as e:
-            logger.debug(e)
-            version = "undefined"
+    return {
+        "program": "Samtools",
+        "version": version
+    }
 
-        return {
-            "program": "Samtools",
-            "version": version
-        }
 
-    def get_bowtie2_version():
+def __get_version_bowtie2():
 
-        try:
-            cli = ["bowtie2", "--version"]
-            p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
-            stdout = p.communicate()[0]
+    try:
+        cli = ["bowtie2", "--version"]
+        p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+        stdout = p.communicate()[0]
 
-            version = stdout.splitlines()[0].split()[-1].decode("utf8")
-        except Exception as e:
-            logger.debug(e)
-            version = "undefined"
+        version = stdout.splitlines()[0].split()[-1].decode("utf8")
+    except Exception as e:
+        logger.debug(e)
+        version = "undefined"
 
-        return {
-            "program": "Bowtie2",
-            "version": version
-        }
-
-    ver = [{
-        "program": __template__,
-        "version": __version__,
-        "build": __build__
-    }, get_samtools_version(), get_bowtie2_version()]
-    logger.debug("Versions list set to: {}".format(ver))
-
-    with open(".versions", "w") as fh:
-        fh.write(json.dumps(ver, separators=(",", ":")))
+    return {
+        "program": "Bowtie2",
+        "version": version
+    }
 
 
 if __file__.endswith(".command.sh"):
@@ -553,6 +540,7 @@ def get_assembly_size(assembly_file):
     return assembly_size, contig_size
 
 
+@MainWrapper
 def main(fastq_id, assembly_file, coverage_file, coverage_bp_file, bam_file,
          opts, gsize):
     """Main executor of the process_assembly_mapping template.
@@ -624,11 +612,5 @@ def main(fastq_id, assembly_file, coverage_file, coverage_bp_file, bam_file,
 
 if __name__ == '__main__':
 
-    try:
-        build_versions()
-        main(FASTQ_ID, ASSEMBLY_FILE, COVERAGE_FILE, COVERAGE_BP_FILE,
-             BAM_FILE, OPTS, GSIZE)
-    except Exception as e:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        log_error()
+    main(FASTQ_ID, ASSEMBLY_FILE, COVERAGE_FILE, COVERAGE_BP_FILE,
+         BAM_FILE, OPTS, GSIZE)

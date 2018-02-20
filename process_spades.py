@@ -48,27 +48,11 @@ __template__ = "process_spades-nf"
 
 import os
 import json
-import traceback
 import operator
 
-from utils.assemblerflow_base import get_logger, log_error
+from utils.assemblerflow_base import get_logger, MainWrapper
 
 logger = get_logger(__file__)
-
-
-def build_versions():
-
-    logger.debug("Checking module versions")
-
-    ver = [{
-        "program": __template__,
-        "version": __version__,
-        "build": __build__
-    }]
-    logger.debug("Versions list set to: {}".format(ver))
-
-    with open(".versions", "w") as fh:
-        fh.write(json.dumps(ver, separators=(",", ":")))
 
 
 if __file__.endswith(".command.sh"):
@@ -421,6 +405,7 @@ class Assembly:
                 fh.write("{}, {}\\n".format(contig_id, vals))
 
 
+@MainWrapper
 def main(fastq_id, assembly_file, gsize, opts):
     """Main executor of the process_spades template.
 
@@ -532,10 +517,4 @@ def main(fastq_id, assembly_file, gsize, opts):
 
 if __name__ == '__main__':
 
-    try:
-        build_versions()
-        main(FASTQ_ID, ASSEMBLY_FILE, GSIZE, OPTS)
-    except:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        log_error()
+    main(FASTQ_ID, ASSEMBLY_FILE, GSIZE, OPTS)

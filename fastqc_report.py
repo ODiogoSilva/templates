@@ -55,28 +55,12 @@ __template__ = "fastqc_report-nf"
 
 import os
 import json
-import traceback
 
 from collections import OrderedDict
 
-from utils.assemblerflow_base import get_logger, log_error
+from utils.assemblerflow_base import get_logger, MainWrapper
 
 logger = get_logger(__file__)
-
-
-def build_versions():
-    logger.debug("Checking module versions")
-
-    ver = [{
-        "program": __template__,
-        "version": __version__,
-        "build": __build__
-    }]
-    logger.debug("Versions list set to: {}".format(ver))
-
-    with open(".versions", "w") as fh:
-        fh.write(json.dumps(ver, separators=(",", ":")))
-
 
 if __file__.endswith(".command.sh"):
     RESULT_P1 = '$result_p1'.split()
@@ -510,6 +494,7 @@ def check_summary_health(summary_file, **kwargs):
     return health, failed, warning
 
 
+@MainWrapper
 def main(fastq_id, result_p1, result_p2, opts):
     """Main executor of the fastqc_report template.
 
@@ -630,10 +615,4 @@ def main(fastq_id, result_p1, result_p2, opts):
 
 if __name__ == '__main__':
 
-    try:
-        build_versions()
-        main(FASTQ_ID, RESULT_P1, RESULT_P2, OPTS)
-    except:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        log_error()
+    main(FASTQ_ID, RESULT_P1, RESULT_P2, OPTS)

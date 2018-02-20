@@ -43,44 +43,31 @@ import subprocess
 from collections import OrderedDict
 from subprocess import PIPE
 
-from utils.assemblerflow_base import get_logger, log_error
+from utils.assemblerflow_base import get_logger, MainWrapper
 
 logger = get_logger(__file__)
 
 
-def build_versions():
-    logger.debug("Checking module versions")
+def __set_version_pilon():
 
-    def get_pilon_version():
+    pilon_path = "/NGStools/pilon-1.22.jar"
 
-        pilon_path = "/NGStools/pilon-1.22.jar"
+    try:
 
-        try:
+        cli = ["java", "-jar", pilon_path , "--version"]
+        p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+        stdout, _ = p.communicate()
 
-            cli = ["java", "-jar", pilon_path , "--version"]
-            p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
-            stdout, _ = p.communicate()
+        version = stdout.split()[2].decode("utf8")
 
-            version = stdout.split()[2].decode("utf8")
+    except Exception as e:
+        logger.debug(e)
+        version = "undefined"
 
-        except Exception as e:
-            logger.debug(e)
-            version = "undefined"
-
-        return {
-            "program": "Pilon",
-            "version": version,
-        }
-
-    ver = [{
-        "program": __template__,
-        "version": __version__,
-        "build": __build__
-    }, get_pilon_version()]
-    logger.debug("Versions list set to: {}".format(ver))
-
-    with open(".versions", "w") as fh:
-        fh.write(json.dumps(ver, separators=(",", ":")))
+    return {
+        "program": "Pilon",
+        "version": version,
+    }
 
 
 if __file__.endswith(".command.sh"):
@@ -92,7 +79,6 @@ if __file__.endswith(".command.sh"):
     logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
     logger.debug("ASSEMBLY_FILE: {}".format(ASSEMBLY_FILE))
     logger.debug("COVERAGE_BP_FILE: {}".format(COVERAGE_BP_FILE))
-
 
 
 class Assembly:
@@ -429,6 +415,7 @@ class Assembly:
         return cov_res, labels, xbars
 
 
+@MainWrapper
 def main(fastq_id, assembly_file, coverage_bp_file=None):
     """Main executor of the assembly_report template.
 
@@ -498,10 +485,5 @@ def main(fastq_id, assembly_file, coverage_bp_file=None):
 
 if __name__ == '__main__':
 
-    try:
-        build_versions()
-        main(FASTQ_ID, ASSEMBLY_FILE, COVERAGE_BP_FILE)
-    except Exception as e:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        log_error()
+    main(FASTQ_ID, ASSEMBLY_FILE, COVERAGE_BP_FILE)
+

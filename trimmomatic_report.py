@@ -33,28 +33,12 @@ __template__ = "trimmomatic_report-nf"
 
 import os
 import json
-import traceback
 
 from collections import OrderedDict
 
-from utils.assemblerflow_base import get_logger, log_error
+from utils.assemblerflow_base import get_logger, MainWrapper
 
 logger = get_logger(__file__)
-
-
-def build_versions():
-
-    logger.debug("Checking module versions")
-
-    ver = [{
-        "program": __template__,
-        "version": __version__,
-        "build": __build__
-    }]
-    logger.debug("Versions list set to: {}".format(ver))
-
-    with open(".versions", "w") as fh:
-        fh.write(json.dumps(ver, separators=(",", ":")))
 
 
 if __file__.endswith(".command.sh"):
@@ -168,6 +152,7 @@ def write_report(storage_dic, output_file):
             json_rep.write(json.dumps(json_dic, separators=(",", ":")))
 
 
+@MainWrapper
 def main(log_files):
     """ Main executor of the trimmomatic_report template.
 
@@ -194,10 +179,4 @@ def main(log_files):
 
 if __name__ == '__main__':
 
-    try:
-        build_versions()
-        main(LOG_FILES)
-    except:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        log_error()
+    main(LOG_FILES)

@@ -83,7 +83,6 @@ import bz2
 import gzip
 import json
 import zipfile
-import traceback
 
 from itertools import chain
 

@@ -38,7 +38,6 @@ __template__ = "fastqc-nf"
 
 import os
 import subprocess
-import traceback
 
 from subprocess import PIPE
 from os.path import exists, join

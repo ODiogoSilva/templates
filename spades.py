@@ -46,49 +46,33 @@ __build__ = "16012018"
 __template__ = "spades-nf"
 
 import os
-import json
-import traceback
 import subprocess
 
 from subprocess import PIPE
 
-from utils.assemblerflow_base import get_logger, log_error
+from utils.assemblerflow_base import get_logger, MainWrapper
 
 logger = get_logger(__file__)
 
 
-def build_versions():
+def __get_version_spades():
 
-    def get_spades_version():
+    try:
 
-        try:
+        cli = ["spades.py", "--version"]
+        p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+        stdout, _ = p.communicate()
 
-            cli = ["spades.py", "--version"]
-            p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
-            stdout, _ = p.communicate()
+        version = stdout.strip().split()[-1][1:].decode("utf8")
 
-            version = stdout.strip().split()[-1][1:].decode("utf8")
+    except Exception as e:
+        logger.debug(e)
+        version = "undefined"
 
-        except Exception as e:
-            logger.debug(e)
-            version = "undefined"
-
-        return {
-            "program": "SPAdes",
-            "version": version,
-        }
-
-    logger.debug("Checking module versions")
-
-    ver = [{
-        "program": __template__,
-        "version": __version__,
-        "build": __build__
-    }, get_spades_version()]
-    logger.debug("Versions list set to: {}".format(ver))
-
-    with open(".versions", "w") as fh:
-        fh.write(json.dumps(ver, separators=(",", ":")))
+    return {
+        "program": "SPAdes",
+        "version": version,
+    }
 
 
 if __file__.endswith(".command.sh"):
@@ -152,6 +136,7 @@ def set_kmers(kmer_opt, max_read_len):
     return kmers
 
 
+@MainWrapper
 def main(fastq_id, fastq_pair, max_len, kmer, opts):
     """Main executor of the spades template.
 
@@ -239,10 +224,4 @@ def main(fastq_id, fastq_pair, max_len, kmer, opts):
 
 if __name__ == '__main__':
 
-    try:
-        build_versions()
-        main(FASTQ_ID, FASTQ_PAIR, MAX_LEN, KMERS, OPTS)
-    except:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        log_error()
+    main(FASTQ_ID, FASTQ_PAIR, MAX_LEN, KMERS, OPTS)

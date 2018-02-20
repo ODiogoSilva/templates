@@ -52,49 +52,34 @@ __template__ = "trimmomatic-nf"
 
 import os
 import json
-import traceback
 import subprocess
 
 from subprocess import PIPE
 from collections import OrderedDict
 
-from utils.assemblerflow_base import get_logger, log_error
+from utils.assemblerflow_base import get_logger, MainWrapper
 
 logger = get_logger(__file__)
 
 
-def build_versions():
+def __get_version_trimmomatic():
 
-    def get_trimmomatic_version():
+    try:
 
-        try:
+        cli = ["java", "-jar", TRIM_PATH, "-version"]
+        p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+        stdout, _ = p.communicate()
 
-            cli = ["java", "-jar", TRIM_PATH, "-version"]
-            p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
-            stdout, _ = p.communicate()
+        version = stdout.strip().decode("utf8")
 
-            version = stdout.strip().decode("utf8")
+    except Exception as e:
+        logger.debug(e)
+        version = "undefined"
 
-        except Exception as e:
-            logger.debug(e)
-            version = "undefined"
-
-        return {
-            "program": "Trimmomatic",
-            "version": version,
-        }
-
-    logger.debug("Checking module versions")
-
-    ver = [{
-        "program": __template__,
-        "version": __version__,
-        "build": __build__
-    }, get_trimmomatic_version()]
-    logger.debug("Versions list set to: {}".format(ver))
-
-    with open(".versions", "w") as fh:
-        fh.write(json.dumps(ver, separators=(",", ":")))
+    return {
+        "program": "Trimmomatic",
+        "version": version,
+    }
 
 
 if __file__.endswith(".command.sh"):
@@ -247,6 +232,7 @@ def clean_up():
         os.remove(fpath)
 
 
+@MainWrapper
 def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
     """ Main executor of the trimmomatic template.
 
@@ -353,10 +339,4 @@ def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
 
 if __name__ == '__main__':
 
-    try:
-        build_versions()
-        main(FASTQ_ID, FASTQ_PAIR, TRIM_RANGE, TRIM_OPTS, PHRED)
-    except Exception:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        log_error()
+    main(FASTQ_ID, FASTQ_PAIR, TRIM_RANGE, TRIM_OPTS, PHRED)

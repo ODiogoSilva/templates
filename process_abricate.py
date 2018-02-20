@@ -34,66 +34,51 @@ __template__ = "process_abricate-nf"
 import re
 import os
 import json
-import traceback
 import operator
 import subprocess
 
 from subprocess import PIPE
 from collections import defaultdict
 
-from utils.assemblerflow_base import get_logger, log_error
+from utils.assemblerflow_base import get_logger, MainWrapper
 
 logger = get_logger(__file__)
 
 
-def build_versions():
-    logger.debug("Checking module versions")
+def __set_version_abricate():
 
-    def get_abricate_version():
+    try:
 
-        try:
+        # Get abricate version
+        cli = ["abricate", "--version"]
+        p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+        stdout, _ = p.communicate()
 
-            # Get abricate version
-            cli = ["abricate", "--version"]
-            p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
-            stdout, _ = p.communicate()
+        version = stdout.strip().split()[-1].decode("utf8")
 
-            version = stdout.strip().split()[-1].decode("utf8")
+    except Exception as e:
+        logger.debug(e)
+        version = "undefined"
 
-        except Exception as e:
-            logger.debug(e)
-            version = "undefined"
+    try:
 
-        try:
+        # Get abricate database versions
+        cli = ["abricate", "--list"]
+        p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+        dbout, _ = p.communicate()
 
-            # Get abricate database versions
-            cli = ["abricate", "--list"]
-            p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
-            dbout, _ = p.communicate()
+        databases = [[u.decode("utf8") for u in i.strip().split()]
+                     for i in dbout.splitlines()][1:]
 
-            databases = [[u.decode("utf8") for u in i.strip().split()]
-                         for i in dbout.splitlines()][1:]
+    except Exception as e:
+        logger.debug(e)
+        databases = "undefined"
 
-        except Exception as e:
-            logger.debug(e)
-            databases = "undefined"
-
-        return {
-            "program": "abricate",
-            "version": version,
-            "databases": databases
-        }
-
-    ver = [{
-        "program": __template__,
-        "version": __version__,
-        "build": __build__
-    }, get_abricate_version()]
-    logger.debug("Versions list set to: {}".format(ver))
-
-    with open(".versions", "w") as fh:
-        fh.write(json.dumps(ver, separators=(",", ":")))
-
+    return {
+        "program": "abricate",
+        "version": version,
+        "databases": databases
+    }
 
 if __file__.endswith(".command.sh"):
     ABRICATE_FILES = '$abricate_file'.split()
@@ -481,15 +466,10 @@ class AbricateReport(Abricate):
 
 if __name__ == '__main__':
 
+    @MainWrapper
     def main(abr_file):
 
         abr = AbricateReport(fls=abr_file)
         abr.write_report_data()
 
-    try:
-        build_versions()
-        main(ABRICATE_FILES)
-    except Exception:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        log_error()
+    main(ABRICATE_FILES)
