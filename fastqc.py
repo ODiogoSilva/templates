@@ -37,14 +37,13 @@ __build__ = "16012018"
 __template__ = "fastqc-nf"
 
 import os
-import json
 import subprocess
 import traceback
 
 from subprocess import PIPE
 from os.path import exists, join
 
-from utils.assemblerflow_base import get_logger, log_error
+from utils.assemblerflow_base import get_logger, MainWrapper
 
 logger = get_logger(__file__)
 
@@ -131,6 +130,7 @@ def convert_adatpers(adapter_fasta):
         return
 
 
+@MainWrapper
 def main(fastq_pair, adapter_file, cpus):
     """ Main executor of the fastq template.
 
@@ -233,10 +233,4 @@ def main(fastq_pair, adapter_file, cpus):
 
 if __name__ == "__main__":
 
-    try:
-        build_versions()
-        main(FASTQ_PAIR, ADAPTER_FILE, CPUS)
-    except Exception:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        log_error()
+    main(FASTQ_PAIR, ADAPTER_FILE, CPUS)

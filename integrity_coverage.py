@@ -87,7 +87,7 @@ import traceback
 
 from itertools import chain
 
-from utils.assemblerflow_base import get_logger, log_error
+from utils.assemblerflow_base import get_logger, MainWrapper
 
 logger = get_logger(__file__)
 
@@ -241,6 +241,7 @@ def get_encodings_in_range(rmin, rmax):
     return valid_encodings, valid_phred
 
 
+@MainWrapper
 def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
     """ Main executor of the integrity_coverage template.
 
@@ -454,10 +455,4 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
 
 if __name__ == "__main__":
 
-    try:
-        build_versions()
-        main(FASTQ_ID, FASTQ_PAIR, GSIZE, MINIMUM_COVERAGE, OPTS)
-    except Exception:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        log_error()
+    main(FASTQ_ID, FASTQ_PAIR, GSIZE, MINIMUM_COVERAGE, OPTS)
