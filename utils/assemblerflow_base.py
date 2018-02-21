@@ -38,20 +38,21 @@ class MainWrapper:
     def __init__(self, f):
 
         self.f = f
+        self.context = self.f.__globals__
+        self.logger = self.context.get("logger", None)
 
     def __call__(self, *args, **kwargs):
 
-        context = self.f.__globals__
-
-        logger = context.get("logger", None)
+        build_versions = self.context.get("build_versions", None)
 
         try:
-            self.build_versions()
+            if build_versions:
+                build_versions()
             self.f(*args, **kwargs)
         except:
-            if logger:
-                logger.error("Module exited unexpectedly with error:"
-                             "\\n{}".format(traceback.format_exc()))
+            if self.logger:
+                self.logger.error("Module exited unexpectedly with error:"
+                                  "\\n{}".format(traceback.format_exc()))
             log_error()
 
     def build_versions(self):
@@ -89,6 +90,11 @@ class MainWrapper:
         template_build = self.context.get("__build__", None)
 
         if template_version and template_program and template_build:
+            if self.logger:
+                self.logger.debug("Adding template version: {}; {}; "
+                                  "{}".format(template_program,
+                                              template_version,
+                                              template_build))
             version_storage.append({
                 "program": template_program,
                 "version": template_version,
@@ -97,7 +103,11 @@ class MainWrapper:
 
         for var, obj in self.context:
             if var.startswith("__set_version"):
-                version_storage.append(obj())
+                ver = obj()
+                version_storage.append(ver)
+                if self.logger:
+                    self.logger.debug("Found additional software version"
+                                      "{}".format(ver))
 
         with open(".versions", "w") as fh:
             fh.write(json.dumps(version_storage, separators=(",", ":")))
