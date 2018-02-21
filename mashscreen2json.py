@@ -22,31 +22,17 @@ Code documentation
 
 """
 
-__version__ = "1.0.0"
-__build__ = "08022018"
+__version__ = "1.0.1"
+__build__ = "20022018"
 __template__ = "mashscreen2json-nf"
 
 from statistics import median
 import os
 import json
-import traceback
 
-from utils.assemblerflow_base import get_logger, log_error
+from utils.assemblerflow_base import get_logger, MainWrapper
 
 logger = get_logger(__file__)
-
-def build_versions():
-    logger.debug("Checking module versions")
-
-    ver = [{
-        "program": __template__,
-        "version": __version__,
-        "build": __build__
-    }]
-    logger.debug("Versions list set to: {}".format(ver))
-
-    with open(".versions", "w") as fh:
-        fh.write(json.dumps(ver, separators=(",", ":")))
 
 if __file__.endswith(".command.sh"):
     MASH_TXT = '$mashtxt'
@@ -54,6 +40,7 @@ if __file__.endswith(".command.sh"):
         os.path.basename(__file__)))
     logger.debug("MASH_TXT: {}".format(MASH_TXT))
 
+@MainWrapper
 def main(mash_output):
     '''
     converts top results from mash screen txt output to json format
@@ -116,11 +103,5 @@ def main(mash_output):
     output_json.close()
 
 if __name__ == "__main__":
-    try:
-        build_versions()
-        # a variable from nextflow process
-        main(MASH_TXT)
-    except Exception:
-        logger.error("Module exited unexpectedly with error:\\n{}".format(
-            traceback.format_exc()))
-        log_error()
+
+    main(MASH_TXT)
