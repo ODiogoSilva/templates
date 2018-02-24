@@ -51,7 +51,7 @@ def main(mash_output):
         A string with the input file.
 
     '''
-    out_file = open(" ".join(mash_output.split(".")[:-1]) + ".json", "w")
+    out_file = open(".".join(mash_output.split(".")[:-1]) + ".json", "w")
     input_f = open(mash_output, 'r')
 
     master_dict = {}
