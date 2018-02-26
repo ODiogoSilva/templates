@@ -57,6 +57,7 @@ def main(mash_output):
 
     dic = {}
     median_list = []
+    filtered_dic = {}
 
     logger.info("Generating dictionary and list to pre-process the final json")
     for line in read_mash_output:
@@ -85,7 +86,6 @@ def main(mash_output):
         # this statement assures that median_list has indeed any entries
         median_cutoff = median(median_list)
         logger.info("Generating final json to dump to a file")
-        filtered_dic = {}
         for k, v in dic.items():
             # estimated copy number
             copy_number = int(float(v[1]) / median_cutoff)
@@ -95,11 +95,11 @@ def main(mash_output):
                                                              str(copy_number)]
         logger.info(
             "Exported dictionary has {} entries".format(len(filtered_dic)))
-        output_json.write(json.dumps(filtered_dic))
     else:
         # if no entries were found raise an error
         logger.error("No matches were found using mash screen for the queried reads")
 
+    output_json.write(json.dumps(filtered_dic))
     output_json.close()
 
 if __name__ == "__main__":
