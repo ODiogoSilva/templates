@@ -62,9 +62,23 @@ def main(mapping_json, dist_json, screen_json):
 
     """
 
-    print(mapping_json, dist_json, screen_json)
+    mapping_dict = json.load(open(mapping_json))
+    mash_dist_dict = json.load(open(dist_json))
+    mash_screen_dict = json.load(open(screen_json))
 
-    # TODO continue implementation of consensus json
+    # gets the intersection between all modes
+    #finalList = list(set(mapping_dict.keys()).intersection(mash_dist_dict.keys(),
+    #                                                 mash_screen_dict.keys()))
+    # TODO I think a single json object with all entries for all input jsons will suffice
+    # TODO then different colors can be added in pATLAS depending on the shared modules for each accession
+
+    # generate a list of all accessions without duplicates
+    allList = list(set(mapping_dict.keys() * mash_screen_dict.keys() +
+                       mash_dist_dict.keys()))
+
+
+    for accession in allList:
+        # TODO for all this accessions try to ooutput the corresponding value for each dictionary
 
 
 if __name__ == "__main__":
