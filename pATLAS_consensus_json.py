@@ -38,48 +38,45 @@ from utils.assemblerflow_base import get_logger, MainWrapper
 logger = get_logger(__file__)
 
 if __file__.endswith(".command.sh"):
-    MAPPING_JSON = '$mappingOutputFile'
-    DIST_JSON = '$mashDistOutputFile'
-    SCREEN_JSON = '$mashScreenOutputFile'
+    LIST_OF_FILES = '$list_of_files'
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
-    logger.debug("MAPPING_JSON: {}".format(MAPPING_JSON))
-    logger.debug("DIST_JSON: {}".format(DIST_JSON))
-    logger.debug("SCREEN_JSON: {}".format(SCREEN_JSON))
+    logger.debug("LIST_OF_FILES: {}".format(LIST_OF_FILES))
+
 
 @MainWrapper
-def main(mapping_json, dist_json, screen_json):
+def main(list_of_jsons):
     """
 
     Parameters
     ----------
-    mapping_json: str
-        The path to the json file with mapping results
-    dist_json: str
-        The path to the json file with the mash distance results
-    screen_json: str
-        The path to the json file with the mash screen results
+    list_of_jsons: list
+        A list of files provided by fullConsensus process provided by nextflow
 
     """
 
-    mapping_dict = json.load(open(mapping_json))
-    mash_dist_dict = json.load(open(dist_json))
-    mash_screen_dict = json.load(open(screen_json))
+    # first lets gather a collection of the input and their corresponding dicts
+    file_correspondence = {}
+    for infile in list_of_jsons.split(" "):
+        file_dict = json.load(open(infile))
+        file_correspondence[infile] = file_dict
 
-    # gets the intersection between all modes
-    #finalList = list(set(mapping_dict.keys()).intersection(mash_dist_dict.keys(),
-    #                                                 mash_screen_dict.keys()))
-    # TODO I think a single json object with all entries for all input jsons will suffice
-    # TODO then different colors can be added in pATLAS depending on the shared modules for each accession
+    json_dict = {}
+    for accession in list(file_correspondence.values())[0]:
+        if all([True if accession in f_dict else False
+                for f_dict in file_correspondence.values()]):
+            accession_dict = {}
+            for infile in file_correspondence.keys():
+                accession_dict[infile] = file_correspondence[infile][accession]
 
-    # generate a list of all accessions without duplicates
-    allList = list(set(mapping_dict.keys() * mash_screen_dict.keys() +
-                       mash_dist_dict.keys()))
+            json_dict[accession] = accession_dict
 
+    out_file = open("consensus_{}.json".format(
+        list_of_jsons.split(" ")[0].split(".")[0].split("_")[-1]), "w")
 
-    for accession in allList:
-        # TODO for all this accessions try to ooutput the corresponding value for each dictionary
+    out_file.write(json.dumps(json_dict))
+    out_file.close()
 
 
 if __name__ == "__main__":
-    main(MAPPING_JSON, DIST_JSON, SCREEN_JSON)
+    main(LIST_OF_FILES)
