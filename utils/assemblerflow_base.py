@@ -61,8 +61,8 @@ class MainWrapper:
                                   "\\n{}".format(traceback.format_exc()))
             log_error()
 
-        self.logger.debug("Finished template {} at {}".format(
-            self.context.__file__, strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+        self.logger.debug("Finished template at {}".format(
+            strftime("%Y-%m-%d %H:%M:%S", gmtime())))
 
     def build_versions(self):
         """Writes versions JSON for a template file
