@@ -48,7 +48,7 @@ class MainWrapper:
         build_versions = self.context.get("build_versions", None)
 
         self.logger.debug("Starting template {} at {}".format(
-            self.context.__file__, strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+            self.context["__file__"], strftime("%Y-%m-%d %H:%M:%S", gmtime())))
         self.logger.debug("Working directory: {}".format(os.getcwd()))
 
         try:
