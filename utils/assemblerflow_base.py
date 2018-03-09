@@ -7,6 +7,8 @@ import json
 import logging
 import traceback
 
+from time import gmtime, strftime
+
 
 def get_logger(filepath, level=logging.DEBUG):
     # create logger
@@ -45,6 +47,10 @@ class MainWrapper:
 
         build_versions = self.context.get("build_versions", None)
 
+        self.logger.debug("Starting template {} at {}".format(
+            self.context.__file__, strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+        self.logger.debug("Working directory: {}".format(os.getcwd()))
+
         try:
             if build_versions:
                 build_versions()
@@ -54,6 +60,9 @@ class MainWrapper:
                 self.logger.error("Module exited unexpectedly with error:"
                                   "\\n{}".format(traceback.format_exc()))
             log_error()
+
+        self.logger.debug("Finished template {} at {}".format(
+            self.context.__file__, strftime("%Y-%m-%d %H:%M:%S", gmtime())))
 
     def build_versions(self):
         """Writes versions JSON for a template file
