@@ -46,7 +46,7 @@ Code documentation
 # TODO: Add option to remove adapters
 # TODO: What to do when there is encoding failure
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __build__ = "16012018"
 __template__ = "trimmomatic-nf"
 
@@ -283,8 +283,8 @@ def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
     # Add output file names
     output_names = []
     for i in range(len(fastq_pair)):
-        output_names.append("{}_{}_P.fastq.gz".format(FASTQ_ID, str(i + 1)))
-        output_names.append("{}_{}_U.fastq.gz".format(FASTQ_ID, str(i + 1)))
+        output_names.append("{}_{}_P_QC.fastq.gz".format(FASTQ_ID, str(i + 1)))
+        output_names.append("{}_{}_U_QC.fastq.gz".format(FASTQ_ID, str(i + 1)))
     cli += output_names
 
     if trim_range != ["None"]:

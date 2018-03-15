@@ -41,7 +41,7 @@ Code documentation
 
 """
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __build__ = "16012018"
 __template__ = "spades-nf"
 
@@ -217,6 +217,8 @@ def main(fastq_id, fastq_pair, max_len, kmer, opts):
             fh.write("pass")
 
     # Change the default contigs.fasta assembly name to a more informative one
+    if "_QC." in fastq_pair[0]:
+        fastq_id += "_QC"
     assembly_file = "{}_spades.assembly.fasta".format(fastq_id)
     os.rename("contigs.fasta", assembly_file)
     logger.info("Setting main assembly file to: {}".format(assembly_file))
