@@ -23,8 +23,8 @@ Code documentation
 
 """
 
-__version__ = "1.0.1"
-__build__ = "20022018"
+__version__ = "1.1"
+__build__ = "21032018"
 __template__ = "mashsdist2json-nf"
 
 import os
@@ -39,6 +39,36 @@ if __file__.endswith(".command.sh"):
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
     logger.debug("MASH_TXT: {}".format(MASH_TXT))
+
+
+def send_to_output(master_dict, last_seq, mash_output):
+    """Send dictionary to output json file
+    This function sends master_dict dictionary to a json file if master_dict is
+    populated with entries, otherwise it won't create the file
+
+    Parameters
+    ----------
+    master_dict: dict
+        dictionary that stores all entries for a specific query sequence
+        in multi-fasta given to mash dist as input against patlas database
+    last_seq: str
+        string that stores the last sequence that was parsed before writing to
+        file and therefore after the change of query sequence between different
+        rows on the input file
+    mash_output: str
+        the name/path of input file to main function, i.e., the name/path of
+        the mash dist output txt file.
+
+    Returns
+    -------
+
+    """
+    # create a new file only if master_dict is populated
+    if master_dict:
+        out_file = open("{}_{}.json".format(
+            "".join(mash_output.split(".")[0]), last_seq), "w")
+        out_file.write(json.dumps(master_dict))
+        out_file.close()
 
 
 @MainWrapper
@@ -73,15 +103,13 @@ def main(mash_output):
         perc_hashes = float(hashes_list[0]) / float(hashes_list[1])
 
         if last_seq != current_seq and counter > 0:
-            out_file.write(json.dumps(master_dict))
-            out_file.close()
+            # create a new file only if master_dict is populated
+            send_to_output(master_dict, last_seq, mash_output)
             master_dict = {}
             counter = 0
 
-        # if counter = 1 then open a new file
+        # if counter = 0 last_seq should be updated before the next if statement
         if counter == 0:
-            out_file = open("{}_{}.json".format(
-                "".join(mash_output.split(".")[0]), current_seq), "w")
             counter += 1
             last_seq = current_seq
 
@@ -92,8 +120,7 @@ def main(mash_output):
         last_seq = current_seq
 
     # assures that file is closed in last iteration of the loop
-    out_file.write(json.dumps(master_dict))
-    out_file.close()
+    send_to_output(master_dict, last_seq, mash_output)
 
 
 if __name__ == "__main__":
