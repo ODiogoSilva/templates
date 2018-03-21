@@ -30,7 +30,7 @@ Code documentation
 
 """
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __build__ = "16012018"
 __template__ = "assembly_report-nf"
 
@@ -180,6 +180,36 @@ class Assembly:
             self.contigs = OrderedDict(
                 (header, "".join(seq)) for header, seq in self.contigs.items())
 
+    @staticmethod
+    def _get_contig_id(contig_str):
+        """Tries to retrieve contig id. Returns the original string if it
+        is unable to retrieve the id.
+
+        Parameters
+        ----------
+        contig_str : str
+            Full contig string (fasta header)
+
+        Returns
+        -------
+        str
+            Contig id
+        """
+
+        contig_id = contig_str
+
+        try:
+            contig_id = re.search(".*NODE_([0-9]*)_.*", contig_str).group(1)
+        except AttributeError:
+            pass
+
+        try:
+            contig_id = re.search(".*Contig_([0-9]*)_.*", contig_str).group(1)
+        except AttributeError:
+            pass
+
+        return contig_id
+
     def get_summary_stats(self, output_csv=None):
         """Generates a CSV report with summary statistics about the assembly
 
@@ -277,7 +307,7 @@ class Assembly:
         c = 0
         xbars = []
         for contig, seq in self.contigs.items():
-            contig_id = re.search(".*_NODE_([0-9]*)_.*", contig).group(1)
+            contig_id = self._get_contig_id(contig)
             self.contig_boundaries[contig_id] = [c, c + len(seq)]
             c += len(seq)
             xbars.append(
