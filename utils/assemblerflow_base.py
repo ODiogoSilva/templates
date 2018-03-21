@@ -107,7 +107,7 @@ class MainWrapper:
                 "build": template_build
             })
 
-        for var, obj in self.context:
+        for var, obj in self.context.items():
             if var.startswith("__set_version"):
                 ver = obj()
                 version_storage.append(ver)
