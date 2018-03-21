@@ -45,15 +45,12 @@ class MainWrapper:
 
     def __call__(self, *args, **kwargs):
 
-        build_versions = self.context.get("build_versions", None)
-
         self.logger.debug("Starting template at {}".format(
             strftime("%Y-%m-%d %H:%M:%S", gmtime())))
         self.logger.debug("Working directory: {}".format(os.getcwd()))
 
         try:
-            if build_versions:
-                build_versions()
+            self.build_versions()
             self.f(*args, **kwargs)
         except:
             if self.logger:
