@@ -132,6 +132,38 @@ class Assembly:
         # and gc content
         self.filter_contigs(*self.filters)
 
+    def _parse_coverage(self, header_str):
+        """Attempts to retrieve the coverage value from the header string.
+
+        It splits the header by "_" and then screens the list backwards in
+        search of the first float value. This will be interpreted as the
+        coverage value. If it cannot find a float value, it returns None.
+        This search methodology is based on the strings of assemblers
+        like spades and skesa that put the mean kmer coverage for each
+        contig in its corresponding fasta header.
+
+        Parameters
+        ----------
+        header_str : str
+            String
+
+        Returns
+        -------
+        float or None
+            The coverage value for the contig. None if it cannot find the
+            value in the provide string.
+        """
+
+        cov = None
+        for i in header_str.split("_")[::-1]:
+            try:
+                cov = float(i)
+                break
+            except ValueError:
+                continue
+
+        return cov
+
     def _parse_assembly(self, assembly_file):
         """Parse a Spades assembly fasta file.
 
@@ -188,7 +220,7 @@ class Assembly:
                         contig_id += 1
 
                     header = line[1:]
-                    cov = float(line.split("_")[-1])
+                    cov = self._parse_coverage(line)
 
                 else:
                     seq_temp.append(line)
