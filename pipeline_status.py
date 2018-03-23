@@ -29,7 +29,7 @@ import traceback
 
 from os.path import join
 
-from utils.assemblerflow_base import get_logger, log_error
+from assemblerflow_utils.assemblerflow_base import get_logger, log_error
 
 logger = get_logger(__file__)
 

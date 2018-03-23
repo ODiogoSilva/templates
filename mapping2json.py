@@ -36,7 +36,7 @@ __template__ = "mapping2json-nf"
 import os
 import json
 
-from utils.assemblerflow_base import get_logger, MainWrapper
+from assemblerflow_utils.assemblerflow_base import get_logger, MainWrapper
 
 logger = get_logger(__file__)
 

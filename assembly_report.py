@@ -43,7 +43,7 @@ import subprocess
 from collections import OrderedDict
 from subprocess import PIPE
 
-from utils.assemblerflow_base import get_logger, MainWrapper
+from assemblerflow_utils.assemblerflow_base import get_logger, MainWrapper
 
 logger = get_logger(__file__)
 
