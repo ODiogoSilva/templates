@@ -27,8 +27,8 @@ Code documentation
 
 """
 
-__version__ = "1.0.0"
-__build__ = "16012018"
+__version__ = "1.0.1"
+__build__ = "26032018"
 __template__ = "process_abricate-nf"
 
 import re
@@ -79,6 +79,7 @@ def __get_version_abricate():
         "version": version,
         "databases": databases
     }
+
 
 if __file__.endswith(".command.sh"):
     ABRICATE_FILES = '$abricate_file'.split()
@@ -373,6 +374,36 @@ class AbricateReport(Abricate):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    @staticmethod
+    def _get_contig_id(contig_str):
+        """Tries to retrieve contig id. Returns the original string if it
+        is unable to retrieve the id.
+
+        Parameters
+        ----------
+        contig_str : str
+            Full contig string (fasta header)
+
+        Returns
+        -------
+        str
+            Contig id
+        """
+
+        contig_id = contig_str
+
+        try:
+            contig_id = re.search(".*NODE_([0-9]*)_.*", contig_str).group(1)
+        except AttributeError:
+            pass
+
+        try:
+            contig_id = re.search(".*Contig_([0-9]*)_.*", contig_str).group(1)
+        except AttributeError:
+            pass
+
+        return contig_id
+
     def get_plot_data(self):
         """ Generates the JSON report to plot the gene boxes
 
@@ -402,8 +433,7 @@ class AbricateReport(Abricate):
         for key, entry in self.storage.items():
             # Get contig ID using the same regex as in `assembly_report.py`
             # template
-            contig_id = re.search(
-                ".*_NODE_([0-9]*)_.*", entry["reference"]).group(1)
+            contig_id = self._get_contig_id(entry["reference"])
             # Get database
             database = entry["database"]
             if database not in json_dic["plotData"]:
