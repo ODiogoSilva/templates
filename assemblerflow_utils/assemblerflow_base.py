@@ -108,7 +108,7 @@ class MainWrapper:
             })
 
         for var, obj in self.context.items():
-            if var.startswith("__set_version"):
+            if var.startswith("__get_version"):
                 ver = obj()
                 version_storage.append(ver)
                 if self.logger:

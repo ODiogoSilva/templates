@@ -48,7 +48,7 @@ from assemblerflow_utils.assemblerflow_base import get_logger, MainWrapper
 logger = get_logger(__file__)
 
 
-def __set_version_pilon():
+def __get_version_pilon():
 
     pilon_path = "/NGStools/pilon-1.22.jar"
 
