@@ -354,6 +354,8 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
     logger.debug("Filtered contigs for minimum coverage of "
                  "{}: {}".format(minimum_coverage, filtered_contigs))
     total_assembled_bp = sum([sum(coverage_bp[x]) for x in filtered_contigs])
+    logger.debug("Total number of assembled base pairs:"
+                 "{}".format(total_assembled_bp))
 
     warnings = []
     fails = ""
@@ -402,6 +404,8 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
                 [sum(coverage_bp[x]) for x in coverage_info])
             logger.debug("Assembly length without coverage filtering: "
                          "{}".format(assembly_len))
+            logger.debug("Total number of assembled base pairs without"
+                         " filtering: {}".format(total_assembled_bp))
 
             health = False
 
