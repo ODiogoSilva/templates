@@ -353,6 +353,7 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
                         if v["cov"] >= minimum_coverage]
     logger.debug("Filtered contigs for minimum coverage of "
                  "{}: {}".format(minimum_coverage, filtered_contigs))
+    total_assembled_bp = sum([sum(coverage_bp[x]) for x in filtered_contigs])
 
     warnings = []
     fails = ""
@@ -397,6 +398,8 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
             warn_fh.write(warn_msg)
             fails = "Small_genome_size_({})".format(assembly_len)
             assembly_len = sum([v for v in contig_size.values()])
+            total_assembled_bp = sum(
+                [sum(coverage_bp[x]) for x in coverage_info])
             logger.debug("Assembly length without coverage filtering: "
                          "{}".format(assembly_len))
 
@@ -404,7 +407,7 @@ def check_filtered_assembly(coverage_info, coverage_bp, minimum_coverage,
 
         json_dic = {
             "plotData": {
-                "sparkline": assembly_len,
+                "sparkline": total_assembled_bp,
                 "coverageDist": [x["cov"] for x in coverage_info.values()]
             }
         }
