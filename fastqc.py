@@ -69,7 +69,7 @@ def __get_version_fastqc():
 
 if __file__.endswith(".command.sh"):
     FASTQ_PAIR = '$fastq_pair'.split()
-    ADAPTER_FILE = eval('$ad')
+    ADAPTER_FILE = '$ad'
     CPUS = '$task.cpus'
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
@@ -147,11 +147,12 @@ def main(fastq_pair, adapter_file, cpus):
     logger.info("Starting fastqc")
 
     # If an adapter file was provided, convert it to FastQC format
-    if adapter_file:
+    if os.path.exists(adapter_file):
         logger.info("Adapters file provided: {}".format(adapter_file))
         adapters = convert_adatpers(adapter_file)
     else:
-        logger.info("Adapters file not provided")
+        logger.info("Adapters file '{}' not provided or does not "
+                    "exist".format(adapter_file))
         adapters = None
 
     # Setting command line for FastQC

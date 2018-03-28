@@ -52,6 +52,7 @@ __template__ = "trimmomatic-nf"
 
 import os
 import json
+import fileinput
 import subprocess
 
 from subprocess import PIPE
@@ -88,6 +89,7 @@ if __file__.endswith(".command.sh"):
     TRIM_RANGE = '$trim_range'.split()
     TRIM_OPTS = [x.strip() for x in '$opts'.strip("[]").split(",")]
     PHRED = '$phred'
+    ADAPTERS_FILE = '$ad'
 
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
@@ -96,8 +98,10 @@ if __file__.endswith(".command.sh"):
     logger.debug("TRIM_RANGE: {}".format(TRIM_RANGE))
     logger.debug("TRIM_OPTS: {}".format(TRIM_OPTS))
     logger.debug("PHRED: {}".format(PHRED))
+    logger.debug("ADAPTERS_FILE: {}".format(ADAPTERS_FILE))
 
 TRIM_PATH = "/NGStools/Trimmomatic-0.36/trimmomatic.jar"
+ADAPTERS_PATH = "/NGStools/Trimmomatic-0.36/adapters"
 
 
 def parse_log(log_file):
@@ -232,8 +236,29 @@ def clean_up():
         os.remove(fpath)
 
 
+def merge_default_adapters():
+    """Merges the default adapters file in the trimmomatic adapters directory
+
+    Returns
+    -------
+    str
+        Path with the merged adapters file.
+    """
+
+    default_adapters = [os.path.join(ADAPTERS_PATH, x) for x in
+                        os.listdir(ADAPTERS_PATH)]
+    filepath = os.path.join(os.getcwd(), "default_adapters.fasta")
+
+    with open(filepath, "w") as fh, \
+            fileinput.input(default_adapters) as in_fh:
+        for line in in_fh:
+            fh.write(line)
+
+    return filepath
+
+
 @MainWrapper
-def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
+def main(fastq_id, fastq_pair, trim_range, trim_opts, phred, adapters_file):
     """ Main executor of the trimmomatic template.
 
     Parameters
@@ -250,7 +275,9 @@ def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
     phred : int
         Guessed phred score for the sample. The phred score is a generated
         output from :py:class:`templates.integrity_coverage`.
-
+    adapters_file : str
+        Path to adapters file. If not provided, or the path is not available,
+        it will use the default adapters from Trimmomatic will be used
     """
 
     logger.info("Starting trimmomatic")
@@ -292,6 +319,18 @@ def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
             "CROP:{}".format(trim_range[1]),
             "HEADCROP:{}".format(trim_range[0]),
         ]
+
+    if os.path.exists(adapters_file):
+        logger.debug("Using the provided adapters file '{}'".format(
+            adapters_file))
+    else:
+        logger.debug("Adapters file '{}' not provided or does not exist. Using"
+                     " default adapters".format(adapters_file))
+        adapters_file = merge_default_adapters()
+
+    cli += [
+        "ILLUMINACLIP:{}:3:30:10:6:true".format(adapters_file)
+    ]
 
     # Add trimmomatic options
     cli += [
@@ -339,4 +378,4 @@ def main(fastq_id, fastq_pair, trim_range, trim_opts, phred):
 
 if __name__ == '__main__':
 
-    main(FASTQ_ID, FASTQ_PAIR, TRIM_RANGE, TRIM_OPTS, PHRED)
+    main(FASTQ_ID, FASTQ_PAIR, TRIM_RANGE, TRIM_OPTS, PHRED, ADAPTERS_FILE)
