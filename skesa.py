@@ -75,6 +75,7 @@ if __file__.endswith(".command.sh"):
     logger.debug("FASTQ_PAIR: {}".format(FASTQ_PAIR))
 
 
+@MainWrapper
 def main(fastq_id, fastq_pair):
     """Main executor of the skesa template.
 
