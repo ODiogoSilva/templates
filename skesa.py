@@ -20,7 +20,7 @@ The following variables are expected whether using NextFlow or the
 Generated output
 ----------------
 
-- ``${fastqc_id}_*.assembly.fasta`` : Main output of skesawith the assembly
+- ``${fastq_id}_*.assembly.fasta`` : Main output of skesawith the assembly
     - e.g.: ``sample_1_skesa.fasta``
 
 Code documentation
