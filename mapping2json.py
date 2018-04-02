@@ -138,8 +138,8 @@ def main(depth_file, json_dict, cutoff):
                                               cutoff_val)
 
     # then dump do file
-    output_json = open(depth_file + ".json", "w")
-    logger.info("Dumping to {}".format(depth_file + ".json"))
+    output_json = open("{}_mapping.json".format(depth_file), "w")
+    logger.info("Dumping to {}".format("{}_mapping.json".format(depth_file)))
     output_json.write(json.dumps(percentage_basescovered))
     output_json.close()
 
