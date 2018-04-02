@@ -130,7 +130,7 @@ def main(fastq_id, fastq_pair):
     with open(".status", "w") as fh:
         if p.returncode != 0:
             fh.write("error")
-            return
+            raise SystemExit()
         else:
             fh.write("pass")
 
