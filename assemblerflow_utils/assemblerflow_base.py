@@ -3,6 +3,7 @@
 """
 
 import os
+import sys
 import json
 import logging
 import traceback
@@ -52,6 +53,8 @@ class MainWrapper:
         try:
             self.build_versions()
             self.f(*args, **kwargs)
+        except SystemExit as e:
+            sys.exit(e)
         except:
             if self.logger:
                 self.logger.error("Module exited unexpectedly with error:"
