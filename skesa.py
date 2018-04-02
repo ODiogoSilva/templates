@@ -101,7 +101,7 @@ def main(fastq_id, fastq_pair):
         "{},{}".format(fastq_pair[0], fastq_pair[1]),
         "--gz",
         "--use_paired_ends",
-        "--cores"
+        "--cores",
         "${task.cpus}",
         ">",
         output_file
