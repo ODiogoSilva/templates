@@ -102,14 +102,13 @@ def main(fastq_id, fastq_pair):
         "--gz",
         "--use_paired_ends",
         "--cores",
-        "${task.cpus}",
-        ">",
-        output_file
+        "${task.cpus}"
     ]
 
     logger.debug("Running Skesa subprocess with command: {}".format(cli))
 
-    p = subprocess.Popen(cli, stdout=PIPE, stderr=PIPE)
+    with open(output_file, "w") as fh:
+        p = subprocess.Popen(cli, stdout=fh, stderr=PIPE)
     stdout, stderr = p.communicate()
 
     # Attempt to decode STDERR output from bytes. If unsuccessful, coerce to
