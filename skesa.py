@@ -96,7 +96,7 @@ def main(fastq_id, fastq_pair):
     output_file = "{}_skesa{}.fasta".format(fastq_id, version.replace(".", ""))
 
     cli = [
-        "skesa"
+        "skesa",
         "--fastq",
         "{},{}".format(fastq_pair[0], fastq_pair[1]),
         "--gz",
