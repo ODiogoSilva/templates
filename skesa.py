@@ -52,7 +52,7 @@ def __get_version_skesa():
         _, err = p.communicate()
 
         try:
-            version = re.search("v((\..*))-", err.decode("utf8")).group(1)
+            version = re.search("v((\\..*))-", err.decode("utf8")).group(1)
         except AttributeError:
             version = "undefined"
 
