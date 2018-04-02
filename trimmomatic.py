@@ -310,8 +310,10 @@ def main(fastq_id, fastq_pair, trim_range, trim_opts, phred, adapters_file):
     # Add output file names
     output_names = []
     for i in range(len(fastq_pair)):
-        output_names.append("{}_{}_P_QC.fastq.gz".format(FASTQ_ID, str(i + 1)))
-        output_names.append("{}_{}_U_QC.fastq.gz".format(FASTQ_ID, str(i + 1)))
+        output_names.append("{}_{}_trim.fastq.gz".format(
+            FASTQ_ID, str(i + 1)))
+        output_names.append("{}_{}_U_trim.fastq.gz".format(
+            FASTQ_ID, str(i + 1)))
     cli += output_names
 
     if trim_range != ["None"]:

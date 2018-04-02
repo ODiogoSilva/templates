@@ -217,9 +217,13 @@ def main(fastq_id, fastq_pair, max_len, kmer, opts):
             fh.write("pass")
 
     # Change the default contigs.fasta assembly name to a more informative one
-    if "_QC." in fastq_pair[0]:
-        fastq_id += "_QC"
-    assembly_file = "{}_spades.assembly.fasta".format(fastq_id)
+    if "_trim." in fastq_pair[0]:
+        fastq_id += "_trim"
+    # Get spades version for output name
+    info = __get_version_spades()
+
+    assembly_file = "{}_spades{}.fasta".format(
+        fastq_id, info["version"].replace(".", ""))
     os.rename("contigs.fasta", assembly_file)
     logger.info("Setting main assembly file to: {}".format(assembly_file))
 
