@@ -534,7 +534,11 @@ def main(fastq_id, assembly_file, gsize, opts, assembler):
             warnings.append("excessive_contigs:moderate")
 
     # Write filtered assembly
+    logger.debug("Renaming old assembly file to: {}".format(
+        "{}.old".format(assembly_len)))
     os.rename(assembly_file, "{}.old".format(assembly_len))
+    logger.debug("Writting filtered assembly file to: {}".format(
+        assembly_file))
     assembly_obj.write_assembly(assembly_file)
     # Write report
     output_report = "{}.report.csv".format(fastq_id)
