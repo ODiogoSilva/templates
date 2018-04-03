@@ -4,8 +4,9 @@
 Purpose
 -------
 
-This module is intended to process the output of Spades from a single sample.
-The main input is an assembly file produced by spades, which will then be
+This module is intended to process the output of assemblies from a single
+sample from programs such as Spades or Skesa.
+The main input is an assembly file produced by an assembler, which will then be
 filtered according to user-specified parameters.
 
 Expected input
@@ -16,7 +17,7 @@ The following variables are expected whether using NextFlow or the
 
 - ``fastq_id``: Sample Identification string.
     - e.g.: ``'SampleA'``
-- ``assembly``: Fasta file with the assembly from SPAdes.
+- ``assembly``: Fasta file with the assembly.
     - e.g.: ``'contigs.fasta'``
 - ``opts``: List of options for processing spades assembly.
     1. Minimum contig length.
@@ -44,7 +45,7 @@ Code documentation
 
 __version__ = "1.0.0"
 __build__ = "16012018"
-__template__ = "process_spades-nf"
+__template__ = "process_assembly-nf"
 
 import os
 import json
@@ -68,9 +69,9 @@ if __file__.endswith(".command.sh"):
 
 
 class Assembly:
-    """Class that parses and filters a Spades Fasta assembly file
+    """Class that parses and filters a Fasta assembly file
 
-    This class parses a SPAdes assembly fasta file, collects a number
+    This class parses an assembly fasta file, collects a number
     of summary statistics and metadata from the contigs, filters
     contigs based on user-defined metrics and writes filtered assemblies
     and reports.
@@ -78,7 +79,7 @@ class Assembly:
     Parameters
     ----------
     assembly_file : str
-        Path to SPAdes output assembly file.
+        Path to assembly file.
     min_contig_len : int
         Minimum contig length when applying the initial assembly filter.
     min_kmer_cov : int
@@ -170,7 +171,7 @@ class Assembly:
         return cov
 
     def _parse_assembly(self, assembly_file):
-        """Parse a Spades assembly fasta file.
+        """Parse an assembly fasta file.
 
         This is a Fasta parsing method that populates the
         :py:attr:`~Assembly.contigs` attribute with data for each contig in the
@@ -459,7 +460,7 @@ def main(fastq_id, assembly_file, gsize, opts):
 
     """
 
-    logger.info("Starting SPAdes processing")
+    logger.info("Starting assembly file processing")
     warnings = []
     fails = ""
 
@@ -535,14 +536,14 @@ def main(fastq_id, assembly_file, gsize, opts):
     with open(".report.json", "w") as json_report:
         json_dic = {
             "warnings": {
-                "process": "Spades",
+                "process": "process_assembly",
                 "value": warnings
             }
         }
 
         if fails:
             json_dic["fail"] = {
-                "process": "Spades",
+                "process": "process_assembly",
                 "value": fails
             }
 
