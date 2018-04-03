@@ -106,7 +106,7 @@ def main(mash_output, hash_cutoff):
 
         # assures that only the hashes with a given shared percentage are
         # reported to json file
-        if perc_hashes > hash_cutoff:
+        if perc_hashes > float(hash_cutoff):
 
             if last_seq != current_seq and counter > 0:
                 # create a new file only if master_dict is populated
