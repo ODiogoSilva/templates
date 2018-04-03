@@ -30,7 +30,7 @@ Code documentation
 
 __version__ = "1.0.1"
 __build__ = "16012018"
-__template__ = "spades-nf"
+__template__ = "skesa-nf"
 
 import os
 import re
