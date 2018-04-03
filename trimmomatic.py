@@ -312,7 +312,7 @@ def main(fastq_id, fastq_pair, trim_range, trim_opts, phred, adapters_file):
     for i in range(len(fastq_pair)):
         output_names.append("{}_{}_trim.fastq.gz".format(
             FASTQ_ID, str(i + 1)))
-        output_names.append("{}_{}_U_trim.fastq.gz".format(
+        output_names.append("{}_{}_U.fastq.gz".format(
             FASTQ_ID, str(i + 1)))
     cli += output_names
 
