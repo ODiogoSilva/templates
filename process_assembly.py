@@ -26,6 +26,8 @@ The following variables are expected whether using NextFlow or the
         - e.g.: ``'2'``
     3. Maximum number of contigs per 1.5Mb.
         - e.g.: ``'100'``
+- ``assembler``: The name of the assembler
+    - e.g.: ``spades``
 
 Generated output
 ----------------
@@ -61,11 +63,13 @@ if __file__.endswith(".command.sh"):
     ASSEMBLY_FILE = '$assembly'
     GSIZE = float('$gsize')
     OPTS = [x.strip() for x in '$opts'.strip("[]").split(",")]
+    ASSEMBLER = '$assembler'
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
     logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
     logger.debug("GSIZE: {}".format(GSIZE))
     logger.debug("OPTS: {}".format(OPTS))
+    logger.debug("ASSEMBLER: {}".format(ASSEMBLER))
 
 
 class Assembly:
@@ -444,7 +448,7 @@ class Assembly:
 
 
 @MainWrapper
-def main(fastq_id, assembly_file, gsize, opts):
+def main(fastq_id, assembly_file, gsize, opts, assembler):
     """Main executor of the process_spades template.
 
     Parameters
@@ -457,6 +461,8 @@ def main(fastq_id, assembly_file, gsize, opts):
         Estimate of genome size.
     opts : list
         List of options for processing spades assembly.
+    assembler : str
+        Name of the assembler, for logging purposes
 
     """
 
@@ -471,28 +477,29 @@ def main(fastq_id, assembly_file, gsize, opts):
 
     # Parse the spades assembly file and perform the first filtering.
     logger.info("Starting assembly parsing")
-    spades_assembly = Assembly(assembly_file, min_contig_len, min_kmer_cov,
+    assembly_obj = Assembly(assembly_file, min_contig_len, min_kmer_cov,
                                fastq_id)
 
     with open(".warnings", "w") as warn_fh:
         t_80 = gsize * 1000000 * 0.8
         t_150 = gsize * 1000000 * 1.5
         # Check if assembly size of the first assembly is lower than 80% of the
-        # estimated genome size. If True, perform the filtering without the
+        # estimated genome size. If True, redo the filtering without the
         # k-mer coverage filter
-        assembly_len = spades_assembly.get_assembly_length()
+        assembly_len = assembly_obj.get_assembly_length()
         logger.debug("Checking assembly length: {}".format(assembly_len))
+        
         if assembly_len < t_80:
 
             logger.warning("Assembly size ({}) smaller than the minimum "
                            "threshold of 80% of expected genome size. "
                            "Applying contig filters without the k-mer "
                            "coverage filter".format(assembly_len))
-            spades_assembly.filter_contigs(*[
+            assembly_obj.filter_contigs(*[
                 ["length", ">=", min_contig_len]
             ])
 
-            assembly_len = spades_assembly.get_assembly_length()
+            assembly_len = assembly_obj.get_assembly_length()
             logger.debug("Checking updated assembly length: "
                          "{}".format(assembly_len))
             if assembly_len < t_80:
@@ -514,13 +521,13 @@ def main(fastq_id, assembly_file, gsize, opts):
             fails = "Large_genome_size_({})".format(assembly_len)
 
         logger.debug("Checking number of contigs: {}".format(
-            len(spades_assembly.contigs)))
+            len(assembly_obj.contigs)))
         contig_threshold = (max_contigs * gsize) / 1.5
-        if len(spades_assembly.contigs) > contig_threshold:
+        if len(assembly_obj.contigs) > contig_threshold:
 
             warn_msg = "The number of contigs ({}) exceeds the threshold of " \
                        "100 contigs per 1.5Mb ({})".format(
-                            spades_assembly.contigs, contig_threshold)
+                            assembly_obj.contigs, contig_threshold)
 
             logger.warning(warn_msg)
             warn_fh.write(warn_msg)
@@ -528,13 +535,23 @@ def main(fastq_id, assembly_file, gsize, opts):
 
     # Write filtered assembly
     output_assembly = "{}.assembly.fasta".format(fastq_id)
-    spades_assembly.write_assembly(output_assembly)
+    assembly_obj.write_assembly(output_assembly)
     # Write report
     output_report = "{}.report.csv".format(fastq_id)
-    spades_assembly.write_report(output_report)
+    assembly_obj.write_report(output_report)
     # Write json report
     with open(".report.json", "w") as json_report:
         json_dic = {
+            "tableRow": [
+                {"header": "Contigs ({})".format(assembler),
+                 "value": len(assembly_obj.contigs),
+                 "table": "assembly",
+                 "columnBar": True},
+                {"header": "Assembler BP ({})".format(assembler),
+                 "value": assembly_len,
+                 "table": "assembly",
+                 "columnBar": True}
+            ],
             "warnings": {
                 "process": "process_assembly",
                 "value": warnings
