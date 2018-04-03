@@ -572,4 +572,4 @@ def main(fastq_id, assembly_file, gsize, opts, assembler):
 
 if __name__ == '__main__':
 
-    main(FASTQ_ID, ASSEMBLY_FILE, GSIZE, OPTS)
+    main(FASTQ_ID, ASSEMBLY_FILE, GSIZE, OPTS, ASSEMBLER)
