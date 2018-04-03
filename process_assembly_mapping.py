@@ -593,7 +593,8 @@ def main(fastq_id, assembly_file, coverage_file, coverage_bp_file, bam_file,
     # size.
     # If the check below passes with True, then the filtered assembly
     # is above the 80% genome size threshold.
-    filtered_assembly = "{}_filtered.assembly.fasta".format(fastq_id)
+    filtered_assembly = "{}_filt.fasta".format(
+        os.path.splitext(assembly_file)[0])
     filtered_bam = "filtered.bam"
     logger.info("Checking filtered assembly")
     if check_filtered_assembly(coverage_info, coverage_bp_data, min_coverage,
