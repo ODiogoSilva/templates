@@ -160,7 +160,12 @@ class Assembly:
                 cov = float(i)
                 break
             except ValueError:
-                continue
+                try:
+                    fixed_cov = i.rstrip("_Circ").split("_")[::-1]
+                    cov = float(fixed_cov)
+                    break
+                except ValueError:
+                    continue
 
         return cov
 
