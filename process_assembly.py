@@ -536,8 +536,8 @@ def main(fastq_id, assembly_file, gsize, opts, assembler):
     # Write filtered assembly
     logger.debug("Renaming old assembly file to: {}".format(
         "{}.old".format(assembly_file)))
-    os.rename(assembly_file, "{}.old".format(assembly_file))
-    assembly_obj.write_assembly(assembly_file)
+    assembly_obj.write_assembly("{}_proc.fasta".format(
+        os.path.splitext(assembly_file)[0]))
     # Write report
     output_report = "{}.report.csv".format(fastq_id)
     assembly_obj.write_report(output_report)
