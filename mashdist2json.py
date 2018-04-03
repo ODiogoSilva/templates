@@ -23,8 +23,8 @@ Code documentation
 
 """
 
-__version__ = "1.1"
-__build__ = "21032018"
+__version__ = "1.1.1"
+__build__ = "03042018"
 __template__ = "mashsdist2json-nf"
 
 import os
@@ -36,9 +36,11 @@ logger = get_logger(__file__)
 
 if __file__.endswith(".command.sh"):
     MASH_TXT = '$mashtxt'
+    HASH_CUTOFF = '$hashcutoff'
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
     logger.debug("MASH_TXT: {}".format(MASH_TXT))
+    logger.debug("HASH_CUTOFF: {}".format(HASH_CUTOFF))
 
 
 def send_to_output(master_dict, last_seq, mash_output):
@@ -72,7 +74,7 @@ def send_to_output(master_dict, last_seq, mash_output):
 
 
 @MainWrapper
-def main(mash_output):
+def main(mash_output, hash_cutoff):
     '''
     Main function that allows to dump a mash dist txt file to a json file
 
@@ -102,22 +104,26 @@ def main(mash_output):
         # reference
         perc_hashes = float(hashes_list[0]) / float(hashes_list[1])
 
-        if last_seq != current_seq and counter > 0:
-            # create a new file only if master_dict is populated
-            send_to_output(master_dict, last_seq, mash_output)
-            master_dict = {}
-            counter = 0
+        # assures that only the hashes with a given shared percentage are
+        # reported to json file
+        if perc_hashes > hash_cutoff:
 
-        # if counter = 0 last_seq should be updated before the next if statement
-        if counter == 0:
-            counter += 1
+            if last_seq != current_seq and counter > 0:
+                # create a new file only if master_dict is populated
+                send_to_output(master_dict, last_seq, mash_output)
+                master_dict = {}
+                counter = 0
+
+            # if counter = 0 last_seq should be updated before the next if statement
+            if counter == 0:
+                counter += 1
+                last_seq = current_seq
+
+            # then if last_seq is equal to current_seq write to dict
+            if last_seq == current_seq:
+                master_dict[ref_accession] = [1 - float(mash_dist), perc_hashes]
+
             last_seq = current_seq
-
-        # then if last_seq is equal to current_seq write to dict
-        if last_seq == current_seq:
-            master_dict[ref_accession] = [1 - float(mash_dist), perc_hashes]
-
-        last_seq = current_seq
 
     # assures that file is closed in last iteration of the loop
     send_to_output(master_dict, last_seq, mash_output)
@@ -125,4 +131,4 @@ def main(mash_output):
 
 if __name__ == "__main__":
 
-    main(MASH_TXT)
+    main(MASH_TXT, HASH_CUTOFF)
