@@ -57,7 +57,8 @@ def main(list_of_jsons):
 
     # first lets gather a collection of the input and their corresponding dicts
     file_correspondence = {}
-    for infile in list_of_jsons.split(" "):
+
+    for infile in list_of_jsons:
         file_dict = json.load(open(infile))
         file_correspondence[infile] = file_dict
 
@@ -72,7 +73,7 @@ def main(list_of_jsons):
             json_dict[accession] = accession_dict
 
     out_file = open("consensus_{}.json".format(
-        list_of_jsons.split(" ")[0].split(".")[0].split("_")[-1]), "w")
+        list_of_jsons[0].split(".")[0].split("_")[-1]), "w")
 
     out_file.write(json.dumps(json_dict))
     out_file.close()
