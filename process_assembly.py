@@ -45,8 +45,8 @@ Code documentation
 
 """
 
-__version__ = "1.0.0"
-__build__ = "16012018"
+__version__ = "1.0.1"
+__build__ = "11042018"
 __template__ = "process_assembly-nf"
 
 import os
@@ -137,7 +137,8 @@ class Assembly:
         # and gc content
         self.filter_contigs(*self.filters)
 
-    def _parse_coverage(self, header_str):
+    @staticmethod
+    def _parse_coverage(header_str):
         """Attempts to retrieve the coverage value from the header string.
 
         It splits the header by "_" and then screens the list backwards in
@@ -165,12 +166,7 @@ class Assembly:
                 cov = float(i)
                 break
             except ValueError:
-                try:
-                    fixed_cov = i.rstrip("_Circ").split("_")[::-1]
-                    cov = float(fixed_cov)
-                    break
-                except ValueError:
-                    continue
+                continue
 
         return cov
 
