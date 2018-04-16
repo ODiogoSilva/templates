@@ -137,9 +137,6 @@ dict: Dictionary containing the binary signatures for three compression formats
 """
 
 
-
-
-
 def guess_file_compression(file_path, magic_dict=None):
     """Guesses the compression of an input file.
 
