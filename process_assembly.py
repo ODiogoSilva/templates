@@ -545,7 +545,7 @@ def main(fastq_id, assembly_file, gsize, opts, assembler):
                  "value": len(assembly_obj.contigs),
                  "table": "assembly",
                  "columnBar": True},
-                {"header": "Assembler BP ({})".format(assembler),
+                {"header": "Assembled BP ({})".format(assembler),
                  "value": assembly_len,
                  "table": "assembly",
                  "columnBar": True}
