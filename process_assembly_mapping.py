@@ -15,7 +15,7 @@ Expected input
 The following variables are expected whether using NextFlow or the
 :py:func:`main` executor.
 
-- ``fastq_id`` : Sample Identification string.
+- ``sample_id`` : Sample Identification string.
     - e.g.: ``'SampleA'``
 - ``assembly`` : Fasta assembly file.
     - e.g.: ``'SH10761A.assembly.fasta'``
@@ -35,7 +35,7 @@ The following variables are expected whether using NextFlow or the
 
 Generated output
 ----------------
-- ``${fastq_id}_filtered.assembly.fasta`` : Filtered assembly file in Fasta \
+- ``${sample_id}_filtered.assembly.fasta`` : Filtered assembly file in Fasta \
     format.
     - e.g.: ``'SampleA_filtered.assembly.fasta'``
 - ``filtered.bam`` : BAM file with the same filtering as the assembly file.
@@ -101,7 +101,7 @@ def __get_version_bowtie2():
 
 
 if __file__.endswith(".command.sh"):
-    FASTQ_ID = '$fastq_id'
+    SAMPLE_ID = '$sample_id'
     ASSEMBLY_FILE = '$assembly'
     COVERAGE_FILE = '$coverage'
     COVERAGE_BP_FILE = '$coverage_bp'
@@ -110,7 +110,7 @@ if __file__.endswith(".command.sh"):
     GSIZE = float('$gsize')
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
-    logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
+    logger.debug("SAMPLE_ID: {}".format(SAMPLE_ID))
     logger.debug("ASSEMBLY_FILE: {}".format(ASSEMBLY_FILE))
     logger.debug("COVERAGE_FILE: {}".format(COVERAGE_FILE))
     logger.debug("COVERAGE_BP_FILE: {}".format(COVERAGE_BP_FILE))
@@ -548,13 +548,13 @@ def get_assembly_size(assembly_file):
 
 
 @MainWrapper
-def main(fastq_id, assembly_file, coverage_file, coverage_bp_file, bam_file,
+def main(sample_id, assembly_file, coverage_file, coverage_bp_file, bam_file,
          opts, gsize):
     """Main executor of the process_assembly_mapping template.
 
     Parameters
     ----------
-    fastq_id : str
+    sample_id : str
         Sample Identification string.
     assembly_file : str
         Path to assembly file in Fasta format.
@@ -620,5 +620,5 @@ def main(fastq_id, assembly_file, coverage_file, coverage_bp_file, bam_file,
 
 if __name__ == '__main__':
 
-    main(FASTQ_ID, ASSEMBLY_FILE, COVERAGE_FILE, COVERAGE_BP_FILE,
+    main(SAMPLE_ID, ASSEMBLY_FILE, COVERAGE_FILE, COVERAGE_BP_FILE,
          BAM_FILE, OPTS, GSIZE)

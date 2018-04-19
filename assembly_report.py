@@ -13,7 +13,7 @@ Expected input
 The following variables are expected whether using NextFlow or the
 :py:func:`main` executor.
 
-- ``fastq_id`` : Sample Identification string.
+- ``sample_id`` : Sample Identification string.
     - e.g.: ``'SampleA'``
 - ``assembly`` : Path to assembly file in Fasta format.
     - e.g.: ``'assembly.fasta'``
@@ -21,7 +21,7 @@ The following variables are expected whether using NextFlow or the
 Generated output
 ----------------
 
-- ``${fastq_id}_assembly_report.csv`` : CSV with summary information of the \
+- ``${sample_id}_assembly_report.csv`` : CSV with summary information of the \
     assembly.
     - e.g.: ``'SampleA_assembly_report.csv'``
 
@@ -71,12 +71,12 @@ def __get_version_pilon():
 
 
 if __file__.endswith(".command.sh"):
-    FASTQ_ID = '$fastq_id'
+    SAMPLE_ID = '$sample_id'
     ASSEMBLY_FILE = '$assembly'
     COVERAGE_BP_FILE = '$coverage_bp'
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
-    logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
+    logger.debug("SAMPLE_ID: {}".format(SAMPLE_ID))
     logger.debug("ASSEMBLY_FILE: {}".format(ASSEMBLY_FILE))
     logger.debug("COVERAGE_BP_FILE: {}".format(COVERAGE_BP_FILE))
 
@@ -446,12 +446,12 @@ class Assembly:
 
 
 @MainWrapper
-def main(fastq_id, assembly_file, coverage_bp_file=None):
+def main(sample_id, assembly_file, coverage_bp_file=None):
     """Main executor of the assembly_report template.
 
     Parameters
     ----------
-    fastq_id : str
+    sample_id : str
         Sample Identification string.
     assembly_file : str
         Path to assembly file in Fasta format.
@@ -459,10 +459,10 @@ def main(fastq_id, assembly_file, coverage_bp_file=None):
     """
 
     logger.info("Starting assembly report")
-    assembly_obj = Assembly(assembly_file, fastq_id)
+    assembly_obj = Assembly(assembly_file, sample_id)
 
     logger.info("Retrieving summary statistics for assembly")
-    assembly_obj.get_summary_stats("{}_assembly_report.csv".format(fastq_id))
+    assembly_obj.get_summary_stats("{}_assembly_report.csv".format(sample_id))
 
     size_dist = [len(x) for x in assembly_obj.contigs.values()]
     json_dic = {
@@ -515,5 +515,5 @@ def main(fastq_id, assembly_file, coverage_bp_file=None):
 
 if __name__ == '__main__':
 
-    main(FASTQ_ID, ASSEMBLY_FILE, COVERAGE_BP_FILE)
+    main(SAMPLE_ID, ASSEMBLY_FILE, COVERAGE_BP_FILE)
 

@@ -37,7 +37,7 @@ logger = get_logger(__file__)
 LOG_STATS = ".pipeline_status.json"
 
 if __file__.endswith(".command.sh"):
-    FASTQ_ID = 'fastq_id'
+    fastq_id = 'sample_id'
     TRACE_FILE = 'pipeline_stats.txt'
     WORKDIR = '${workflow.projectDir}'
 
@@ -84,7 +84,7 @@ def get_previous_stats(stats_path):
     return stats_json
 
 
-def main(fastq_id, trace_file, workdir):
+def main(sample_id, trace_file, workdir):
     """
     Parses a nextflow trace file, searches for processes with a specific tag
     and sends a JSON report with the relevant information
@@ -113,9 +113,9 @@ def main(fastq_id, trace_file, workdir):
         Path to the nextflow trace file
     """
 
-    # Determine the path of the stored JSON for the fastq_id
+    # Determine the path of the stored JSON for the sample_id
     stats_suffix = ".stats.json"
-    stats_path = join(workdir, fastq_id + stats_suffix)
+    stats_path = join(workdir, sample_id + stats_suffix)
     trace_path = join(workdir, trace_file)
 
     logger.info("Starting pipeline status routine")
@@ -159,7 +159,7 @@ def main(fastq_id, trace_file, workdir):
 if __name__ == "__main__":
 
     try:
-        main(FASTQ_ID, TRACE_FILE, WORKDIR)
+        main(fastq_id, TRACE_FILE, WORKDIR)
     except Exception:
         logger.error("Module exited unexpectedly with error:\\n{}".format(
             traceback.format_exc()))

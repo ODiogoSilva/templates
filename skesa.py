@@ -12,7 +12,7 @@ Expected input
 The following variables are expected whether using NextFlow or the
 :py:func:`main` executor.
 
-- ``fastq_id`` : Sample Identification string.
+- ``sample_id`` : Sample Identification string.
     - e.g.: ``'SampleA'``
 - ``fastq_pair`` : Pair of FastQ file paths.
     - e.g.: ``'SampleA_1.fastq.gz SampleA_2.fastq.gz'``
@@ -20,7 +20,7 @@ The following variables are expected whether using NextFlow or the
 Generated output
 ----------------
 
-- ``${fastq_id}_*.assembly.fasta`` : Main output of skesawith the assembly
+- ``${sample_id}_*.assembly.fasta`` : Main output of skesawith the assembly
     - e.g.: ``sample_1_skesa.fasta``
 
 Code documentation
@@ -67,21 +67,21 @@ def __get_version_skesa():
 
 
 if __file__.endswith(".command.sh"):
-    FASTQ_ID = '$fastq_id'
+    SAMPLE_ID = '$sample_id'
     FASTQ_PAIR = '$fastq_pair'.split()
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
-    logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
+    logger.debug("SAMPLE_ID: {}".format(SAMPLE_ID))
     logger.debug("FASTQ_PAIR: {}".format(FASTQ_PAIR))
 
 
 @MainWrapper
-def main(fastq_id, fastq_pair):
+def main(sample_id, fastq_pair):
     """Main executor of the skesa template.
 
     Parameters
     ----------
-    fastq_id : str
+    sample_id : str
         Sample Identification string.
     fastq_pair : list
         Two element list containing the paired FastQ files.
@@ -91,9 +91,9 @@ def main(fastq_id, fastq_pair):
 
     # Determine output file
     if "_trim." in fastq_pair[0]:
-        fastq_id += "_trim"
+        sample_id += "_trim"
     version = __get_version_skesa()["version"]
-    output_file = "{}_skesa{}.fasta".format(fastq_id, version.replace(".", ""))
+    output_file = "{}_skesa{}.fasta".format(sample_id, version.replace(".", ""))
 
     cli = [
         "skesa",
@@ -137,4 +137,4 @@ def main(fastq_id, fastq_pair):
 
 if __name__ == '__main__':
 
-    main(FASTQ_ID, FASTQ_PAIR)
+    main(SAMPLE_ID, FASTQ_PAIR)

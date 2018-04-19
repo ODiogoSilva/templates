@@ -16,7 +16,7 @@ Expected input
 The following variables are expected whether using NextFlow or the
 :py:func:`main` executor.
 
-- ``fastq_id`` : Sample identification string
+- ``sample_id`` : Sample identification string
     - e.g.: ``'SampleA'``
 
 - ``result_p1`` : Path to both FastQC result files for pair 1
@@ -65,13 +65,13 @@ logger = get_logger(__file__)
 if __file__.endswith(".command.sh"):
     RESULT_P1 = '$result_p1'.split()
     RESULT_P2 = '$result_p2'.split()
-    FASTQ_ID = '$fastq_id'
+    SAMPLE_ID = '$sample_id'
     OPTS = '$opts'.split()
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
     logger.debug("RESULT_P1: {}".format(RESULT_P1))
     logger.debug("RESULT_P2: {}".format(RESULT_P2))
-    logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
+    logger.debug("SAMPLE_ID: {}".format(SAMPLE_ID))
     logger.debug("OPTS: {}".format(OPTS))
 
 
@@ -495,7 +495,7 @@ def check_summary_health(summary_file, **kwargs):
 
 
 @MainWrapper
-def main(fastq_id, result_p1, result_p2, opts):
+def main(sample_id, result_p1, result_p2, opts):
     """Main executor of the fastqc_report template.
 
     If the "--ignore-tests" option is present in the ``opts`` argument,
@@ -507,7 +507,7 @@ def main(fastq_id, result_p1, result_p2, opts):
 
     Parameters
     ----------
-    fastq_id : str
+    sample_id : str
         Sample Identification string.
     result_p1 : list
         Two element list containing the path to the FastQC report files to
@@ -527,9 +527,9 @@ def main(fastq_id, result_p1, result_p2, opts):
     logger.info("Starting fastqc report")
     json_dic = {}
 
-    with open("{}_trim_report".format(fastq_id), "w") as trep_fh, \
+    with open("{}_trim_report".format(sample_id), "w") as trep_fh, \
             open("optimal_trim", "w") as trim_fh, \
-            open("{}_status_report".format(fastq_id), "w") as rep_fh, \
+            open("{}_status_report".format(sample_id), "w") as rep_fh, \
             open(".status", "w") as status_fh, \
             open(".warning", "w") as warn_fh, \
             open(".fail", "w") as fail_fh, \
@@ -566,7 +566,7 @@ def main(fastq_id, result_p1, result_p2, opts):
 
                 # Rename category summary file to the channel that will publish
                 # The results
-                output_file = "{}_{}_summary.txt".format(fastq_id, p)
+                output_file = "{}_{}_summary.txt".format(sample_id, p)
                 os.rename(fastqc_summary, output_file)
                 logger.debug("Setting summary file name to {}".format(
                     output_file))
@@ -586,15 +586,15 @@ def main(fastq_id, result_p1, result_p2, opts):
                         json.dumps(json_dic, separators=(",", ":")))
                     status_fh.write("fail")
                     trim_fh.write("fail")
-                    rep_fh.write("{}, {}\\n".format(fastq_id, ",".join(f_cat)))
-                    trep_fh.write("{},fail,fail\\n".format(fastq_id))
+                    rep_fh.write("{}, {}\\n".format(sample_id, ",".join(f_cat)))
+                    trep_fh.write("{},fail,fail\\n".format(sample_id))
 
                     return
 
             logger.info("Sample passed quality control checks")
 
         status_fh.write("pass")
-        rep_fh.write("{}, pass\\n".format(fastq_id))
+        rep_fh.write("{}, pass\\n".format(sample_id))
 
         logger.info("Assessing optimal trim range for sample")
         # Get optimal trimming range for sample, based on the per base sequence
@@ -603,7 +603,7 @@ def main(fastq_id, result_p1, result_p2, opts):
         logger.info("Optimal trim range set to: {}".format(optimal_trim))
         trim_fh.write("{}".format(" ".join([str(x) for x in optimal_trim])))
 
-        trep_fh.write("{},{},{}\\n".format(fastq_id, optimal_trim[0],
+        trep_fh.write("{},{},{}\\n".format(sample_id, optimal_trim[0],
                                            optimal_trim[1]))
 
         # The json dict report is only populated when the FastQC quality
@@ -615,4 +615,4 @@ def main(fastq_id, result_p1, result_p2, opts):
 
 if __name__ == '__main__':
 
-    main(FASTQ_ID, RESULT_P1, RESULT_P2, OPTS)
+    main(SAMPLE_ID, RESULT_P1, RESULT_P2, OPTS)

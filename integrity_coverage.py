@@ -18,7 +18,7 @@ Expected input
 The following variables are expected whether using NextFlow or the
 :py:func:`main` executor.
 
-- ``fastq_id`` : *Sample Identification string*
+- ``sample_id`` : *Sample Identification string*
     - e.g.: ``'SampleA'``
 
 - ``fastq_pair`` : *Pair of FastQ file paths*
@@ -41,24 +41,24 @@ Generated output
 The generated output are output files that contain an object, usually a string.
 (Values within ``${}`` are substituted by the corresponding variable.)
 
-- ``${fastq_id}_encoding`` : Stores the encoding for the sample FastQ. If no \
+- ``${sample_id}_encoding`` : Stores the encoding for the sample FastQ. If no \
     encoding could be guessed, write 'None' to file.
     - e.g.: ``'Illumina-1.8'`` or ``'None'``
 
-- ``${fastq_id}_phred`` : Stores the phred value for the sample FastQ. If no \
+- ``${sample_id}_phred`` : Stores the phred value for the sample FastQ. If no \
     phred could be guessed, write 'None' to file.
     - ``'33'`` or ``'None'``
 
-- ``${fastq_id}_coverage`` : Stores the expected coverage of the samples, \
+- ``${sample_id}_coverage`` : Stores the expected coverage of the samples, \
     based on a given genome size.
     - ``'112'`` or ``'fail'``
 
-- ``${fastq_id}_report`` : Stores the report on the expected coverage \
+- ``${sample_id}_report`` : Stores the report on the expected coverage \
     estimation. This string written in this file will appear in the \
     coverage report.
-    - ``'${fastq_id}, 112, PASS'``
+    - ``'${sample_id}, 112, PASS'``
 
-- ``${fastq_id}_max_len`` : Stores the maximum read length for the current \
+- ``${sample_id}_max_len`` : Stores the maximum read length for the current \
     sample.
     - ``'152'``
 
@@ -94,14 +94,14 @@ logger = get_logger(__file__)
 if __file__.endswith(".command.sh"):
     # CONSTANTS
     FASTQ_PAIR = '$fastq_pair'.split()
-    FASTQ_ID = '$fastq_id'
+    SAMPLE_ID = '$sample_id'
     GSIZE = float('$gsize')
     MINIMUM_COVERAGE = float('$cov')
     OPTS = '$opts'.split()
 
     logger.debug("Running {} with parameters:".format(
         os.path.basename(__file__)))
-    logger.debug("FASTQ_ID: {}".format(FASTQ_ID))
+    logger.debug("SAMPLE_ID: {}".format(SAMPLE_ID))
     logger.debug("FASTQ_PAIR: {}".format(FASTQ_PAIR))
     logger.debug("GSIZE: {}".format(GSIZE))
     logger.debug("MINIMUM_COVERAGE: {}".format(MINIMUM_COVERAGE))
@@ -238,12 +238,12 @@ def get_encodings_in_range(rmin, rmax):
 
 
 @MainWrapper
-def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
+def main(sample_id, fastq_pair, gsize, minimum_coverage, opts):
     """ Main executor of the integrity_coverage template.
 
     Parameters
     ----------
-    fastq_id : str
+    sample_id : str
         Sample Identification string.
     fastq_pair : list
         Two element list containing the paired FastQ files.
@@ -305,11 +305,11 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
     # The '*_coverage' file stores the estimated coverage ('88')
     # The '*_report' file stores a csv report of the file
     # The '*_max_len' file stores a string with the maximum contig len ('155')
-    with open("{}_encoding".format(fastq_id), "w") as enc_fh, \
-            open("{}_phred".format(fastq_id), "w") as phred_fh, \
-            open("{}_coverage".format(fastq_id), "w") as cov_fh, \
-            open("{}_report".format(fastq_id), "w") as cov_rep, \
-            open("{}_max_len".format(fastq_id), "w") as len_fh, \
+    with open("{}_encoding".format(sample_id), "w") as enc_fh, \
+            open("{}_phred".format(sample_id), "w") as phred_fh, \
+            open("{}_coverage".format(sample_id), "w") as cov_fh, \
+            open("{}_report".format(sample_id), "w") as cov_rep, \
+            open("{}_max_len".format(sample_id), "w") as len_fh, \
             open(".report.json", "w") as json_report, \
             open(".status", "w") as status_fh, \
             open(".fail", "w") as fail_fh:
@@ -416,7 +416,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
 
             if exp_coverage >= minimum_coverage:
                 cov_rep.write("{},{},{}\\n".format(
-                    fastq_id, str(exp_coverage), "PASS"))
+                    sample_id, str(exp_coverage), "PASS"))
                 cov_fh.write(str(exp_coverage))
                 status_fh.write("pass")
             # Estimated coverage does not pass minimum threshold
@@ -428,7 +428,7 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
                 cov_fh.write("fail")
                 status_fh.write("fail")
                 cov_rep.write("{},{},{}\\n".format(
-                    fastq_id, str(exp_coverage), "FAIL"))
+                    sample_id, str(exp_coverage), "FAIL"))
                 json_dic["fail"] = {
                     "process": "integrityCoverage",
                     "value": fail_msg
@@ -451,4 +451,4 @@ def main(fastq_id, fastq_pair, gsize, minimum_coverage, opts):
 
 if __name__ == "__main__":
 
-    main(FASTQ_ID, FASTQ_PAIR, GSIZE, MINIMUM_COVERAGE, OPTS)
+    main(SAMPLE_ID, FASTQ_PAIR, GSIZE, MINIMUM_COVERAGE, OPTS)
